@@ -16,8 +16,32 @@ import pandas as pd
 import io
 import requests
 
+#the daily case changes by phu csv total column is the the number of new cases since yesterday it is new positive cases + new resolved cases + new deaths
 
+
+
+phu_data_rolling = pd.read_csv('Ontario_PHU.csv')
+ontario_daily = pd.read_csv('Ontario_status.csv')
 df = pd.read_csv('recent_phu.csv')
+
+#functions to compute necessary values for dashboard
+ontario_daily.loc[:,'new_positive'] = ontario_daily['Confirmed Positive'].diff()
+ontario_daily.loc[:,'new_cases']= ontario_daily['Total Cases'].diff()
+ontario_daily.loc[:,'new_resolved']= ontario_daily['Resolved'].diff()
+ontario_daily.loc[:,'new_death']= ontario_daily['Deaths'].diff()
+
+today = ontario_daily.loc[ontario_daily['Reported Date']==ontario_daily['Reported Date'].max(),:]
+active_cases = int(today['Confirmed Positive'])
+total_cases = int(today['Total Cases'])
+total_deaths = int(today['Deaths'])
+total_recoveries = int(today['Resolved'])
+
+new_positive_today = int(today['new_positive'])
+new_recovered_today = int(today['new_resolved'])
+new_deaths_today = int(today['new_death'])
+
+if(new_positive_today < 0):
+    new_positive_today = 0
 
 with open("Ministry_of_Health_Public_Health_Unit_Boundary Simplified.json") as f:
     boundary_data = json.load(f)
@@ -45,22 +69,86 @@ fig2.update_layout(margin={"r":0,"t":0,"l":0,"b":0})'''
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-### HTML components go here
+### HTML components go here, control the heights using h classes with percent of screen height
 app.layout = dbc.Container(
     [
         dbc.Row(dbc.Col(html.H1("Ontario COVID-19 Tracker"))),
         dbc.Row(
             [
-                dbc.Col(id="phu-zone",md=0),
-                dbc.Col(dcc.Graph(id='ontario-map',figure=fig),id="map-box",md=12),
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col([html.H4("New Cases Today", className="card-title"),
+                            html.H1(str(new_positive_today)),
+                            ], width=6),
+                            dbc.Col([html.H4("Total Cases", className="card-title"),
+                            html.H1(str(total_cases)),
+                            ], width=6)
+                        ])
+                            
+                        ]
+                    ),
+                    style={'text-align':'center'},outline=True),md=6, width=6),
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col([html.H4("Deaths Today", className="card-title"),
+                            html.H1(str(new_deaths_today)),
+                            ], width=6),
+                            dbc.Col([html.H4("Total Deaths", className="card-title"),
+                            html.H1(str(total_deaths)),
+                            ], width=6)
+                        ])
+                            
+                        ]
+                    ),
+                    style={'text-align':'center'},outline=True),md=6, width=6),
+            ]),
+        dbc.Row(
+            [
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col([html.H4("Recovered Today", className="card-title"),
+                            html.H1(str(new_recovered_today)),
+                            ], width=6),
+                            dbc.Col([html.H4("Total Recovered", className="card-title"),
+                            html.H1(str(total_recoveries)),
+                            ], width=6)
+                        ])
+                            
+                        ]
+                    ),
+                    style={'text-align':'center'},outline=True),md=6, width=6),
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col([html.H4("Tested Today", className="card-title"),
+                            html.H1("N/A"),
+                            ], width=6),
+                            dbc.Col([html.H4("Total Tested", className="card-title"),
+                            html.H1("N/A"),
+                            ], width=6)
+                        ])
+                            
+                        ]
+                    ),
+                    style={'text-align':'center'},outline=True),md=6, width=6),
+            ]),
+        dbc.Row(
+            [
+                dbc.Col(id="phu-zone",md=6, width=6),
+                dbc.Col(dcc.Graph(id='ontario-map',figure=fig),id="map-box",md=6,width=6),
             ],
             align="center",
-        ),
-        
+        className="h-75"),
+        dbc.Row(
+            [
+            ],
+            align="center",
+        className="h-25"),
+
     ],
     fluid=True,
+    style={"height":"100vh"}
 )
 
 '''
