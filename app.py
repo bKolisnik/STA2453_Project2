@@ -19,9 +19,15 @@ import requests
 #the daily case changes by phu csv total column is the the number of new cases since yesterday it is new positive cases + new resolved cases + new deaths
 
 
+def get_data_from_url(url):
+    content = requests.get(url).content
+    return pd.read_csv(io.StringIO(content.decode('utf-8')))
 
-phu_data_rolling = pd.read_csv('Ontario_PHU.csv')
-ontario_daily = pd.read_csv('Ontario_status.csv')
+phu_data_rolling = get_data_from_url('https://data.ontario.ca/dataset/1115d5fe-dd84-4c69-b5ed-05bf0c0a0ff9/resource/d1bfe1ad-6575-4352-8302-09ca81f7ddfc/download/cases_by_status_and_phu.csv')
+ontario_daily = get_data_from_url('https://data.ontario.ca/dataset/f4f86e54-872d-43f8-8a86-3892fd3cb5e6/resource/ed270bb8-340b-41f9-a7c6-e8ef587e6d11/download/covidtesting.csv')
+
+#phu_data_rolling = pd.read_csv('Ontario_PHU.csv')
+#ontario_daily = pd.read_csv('Ontario_status.csv')
 df = pd.read_csv('recent_phu.csv')
 
 #functions to compute necessary values for dashboard
@@ -35,10 +41,12 @@ active_cases = int(today['Confirmed Positive'])
 total_cases = int(today['Total Cases'])
 total_deaths = int(today['Deaths'])
 total_recoveries = int(today['Resolved'])
+total_tests = int(ontario_daily['Total tests completed in the last day'].sum())
 
 new_positive_today = int(today['new_positive'])
 new_recovered_today = int(today['new_resolved'])
 new_deaths_today = int(today['new_death'])
+tests_today = int(today['Total tests completed in the last day'])
 
 if(new_positive_today < 0):
     new_positive_today = 0
@@ -121,11 +129,11 @@ app.layout = dbc.Container(
                     style={'text-align':'center'},outline=True),md=6, width=6),
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
-                        [dbc.Row([dbc.Col([html.H4("Tested Today", className="card-title"),
-                            html.H1("N/A"),
+                        [dbc.Row([dbc.Col([html.H4("Tests Completed Today", className="card-title"),
+                            html.H1(str(tests_today)),
                             ], width=6),
-                            dbc.Col([html.H4("Total Tested", className="card-title"),
-                            html.H1("N/A"),
+                            dbc.Col([html.H4("Total Tests Completed", className="card-title"),
+                            html.H1(str(total_tests)),
                             ], width=6)
                         ])
                             
