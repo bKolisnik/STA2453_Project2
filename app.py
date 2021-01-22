@@ -25,10 +25,38 @@ def get_data_from_url(url):
 
 phu_data_rolling = get_data_from_url('https://data.ontario.ca/dataset/1115d5fe-dd84-4c69-b5ed-05bf0c0a0ff9/resource/d1bfe1ad-6575-4352-8302-09ca81f7ddfc/download/cases_by_status_and_phu.csv')
 ontario_daily = get_data_from_url('https://data.ontario.ca/dataset/f4f86e54-872d-43f8-8a86-3892fd3cb5e6/resource/ed270bb8-340b-41f9-a7c6-e8ef587e6d11/download/covidtesting.csv')
+# COVID-19 Testing Data
+df_test = get_data_from_url('https://data.ontario.ca/dataset/a2dfa674-a173-45b3-9964-1e3d2130b40f/resource/07bc0e21-26b5-4152-b609-c1958cb7b227/download/testing_metrics_by_phu.csv')
+
 
 #phu_data_rolling = pd.read_csv('Ontario_PHU.csv')
 #ontario_daily = pd.read_csv('Ontario_status.csv')
-df = pd.read_csv('recent_phu.csv')
+current_date = max(phu_data_rolling['FILE_DATE'].unique())
+df = phu_data_rolling.loc[phu_data_rolling['FILE_DATE'] == current_date]
+df.reset_index(inplace=True, drop=True)
+
+
+## compute the population in each Public Health Unit
+# convert string to integer
+df_test['test_volumes_7d_avg'] = df_test['test_volumes_7d_avg'].apply(lambda x: int(x.replace(',', '')))
+df_test['DATE']= pd.to_datetime(df_test['DATE'], dayfirst = True)
+
+current_date = max(df_test['DATE'].unique())
+df_test_current = df_test.loc[df_test['DATE'] == current_date]
+df_test_current.reset_index(inplace=True, drop=True)
+
+# compute the population for each PHU
+df_test_current['pop'] = (df_test_current['test_volumes_7d_avg'] / df_test_current['tests_per_1000_7d_avg']) * 1000
+
+## compute the COVID-19 positive rate by Public Health Unit and generate bar plot
+df = df.merge(df_test_current, left_on='PHU_NUM', right_on='PHU_num')
+df['positive_rate'] = (df['ACTIVE_CASES']/df['pop']) * 100
+df = df.sort_values(by = 'positive_rate')
+fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700, 
+                           labels={'positive_rate': 'COVID-19 Positive Rate %',
+                                   'PHU_NAME': 'Public Health Unit'})
+
+
 
 #functions to compute necessary values for dashboard
 ontario_daily.loc[:,'new_positive'] = ontario_daily['Confirmed Positive'].diff()
@@ -43,7 +71,7 @@ total_deaths = int(today['Deaths'])
 total_recoveries = int(today['Resolved'])
 total_tests = int(ontario_daily['Total tests completed in the last day'].sum())
 
-new_positive_today = int(today['new_positive'])
+new_positive_today = int(today['new_cases'])
 new_recovered_today = int(today['new_resolved'])
 new_deaths_today = int(today['new_death'])
 tests_today = int(today['Total tests completed in the last day'])
@@ -148,11 +176,19 @@ app.layout = dbc.Container(
             ],
             align="center",
         className="h-75"),
+#         dbc.Row(
+#             [
+#             ],
+#             align="center",
+#         className="h-25"),
+        # COVID-19 Positive Rate by Public Health Unit
         dbc.Row(
             [
+                #dbc.Col(id="phu-positive",md=0, width=0),
+                dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box",md=6,width=6),
             ],
             align="center",
-        className="h-25"),
+        className="h-85")
 
     ],
     fluid=True,
@@ -160,14 +196,12 @@ app.layout = dbc.Container(
 )
 
 '''
-
 @app.callback(
     Output('ontario-map', 'figure'),
     [Input('ontario-map', 'clickData')])
 def update_figure(clickData):    
     if clickData is not None:            
         location = clickData['points'][0]['location']
-
         if location not in selections:
             selections.add(location)
         else:
@@ -176,4 +210,5 @@ def update_figure(clickData):
     return get_figure(selections)'''
 
 if __name__ == '__main__':
+    # port=8000, host='127.0.0.1'
     app.run_server(debug=True)
