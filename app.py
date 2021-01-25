@@ -27,6 +27,10 @@ phu_data_rolling = get_data_from_url('https://data.ontario.ca/dataset/1115d5fe-d
 ontario_daily = get_data_from_url('https://data.ontario.ca/dataset/f4f86e54-872d-43f8-8a86-3892fd3cb5e6/resource/ed270bb8-340b-41f9-a7c6-e8ef587e6d11/download/covidtesting.csv')
 # COVID-19 Testing Data
 df_test = get_data_from_url('https://data.ontario.ca/dataset/a2dfa674-a173-45b3-9964-1e3d2130b40f/resource/07bc0e21-26b5-4152-b609-c1958cb7b227/download/testing_metrics_by_phu.csv')
+# COVID-19 Ontario ICU Data
+df_ICU = get_data_from_url('https://data.ontario.ca/dataset/8f3a449b-bde5-4631-ada6-8bd94dbc7d15/resource/e760480e-1f95-4634-a923-98161cfb02fa/download/region_hospital_icu_covid_data.csv')
+# COVID-19 Ontario Vaccine Data
+df_Vaccine = get_data_from_url('https://raw.githubusercontent.com/ccodwg/Covid19Canada/master/timeseries_prov/vaccine_administration_timeseries_prov.csv')
 
 
 #phu_data_rolling = pd.read_csv('Ontario_PHU.csv')
@@ -56,6 +60,100 @@ fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700,
                            labels={'positive_rate': 'COVID-19 Positive Rate %',
                                    'PHU_NAME': 'Public Health Unit'})
 
+
+## compute the ICU cases by different region
+fig_ICU = go.Figure()
+df_ICU_CENTRAL = df_ICU.loc[df_ICU.oh_region == 'CENTRAL']
+df_ICU_TORONTO = df_ICU.loc[df_ICU.oh_region == 'TORONTO']
+df_ICU_NORTH = df_ICU.loc[df_ICU.oh_region == 'NORTH']
+df_ICU_WEST = df_ICU.loc[df_ICU.oh_region == 'WEST']
+df_ICU_EAST = df_ICU.loc[df_ICU.oh_region == 'EAST']
+
+
+# Add Traces
+fig_ICU.add_trace(
+    go.Scatter(x=list(df_ICU_CENTRAL.date),
+               y=list(df_ICU_CENTRAL.ICU),
+               name="CENTRAL",
+               line=dict(color="#E74C3C")))
+
+fig_ICU.add_trace(
+    go.Scatter(x=list(df_ICU_TORONTO.date),
+               y=list(df_ICU_TORONTO.ICU),
+               name="TORONTO",
+               line=dict(color="#8E44AD")))
+
+fig_ICU.add_trace(
+    go.Scatter(x=list(df_ICU_WEST.date),
+               y=list(df_ICU_WEST.ICU),
+               name="WEST",
+               line=dict(color="#3498DB")))
+
+fig_ICU.add_trace(
+    go.Scatter(x=list(df_ICU_EAST.date),
+               y=list(df_ICU_EAST.ICU),
+               name="EAST",
+               line=dict(color="#2ECC71")))
+
+fig_ICU.add_trace(
+    go.Scatter(x=list(df_ICU_NORTH.date),
+               y=list(df_ICU_NORTH.ICU),
+               name="NORTH",
+               line=dict(color="#D35400")))
+
+fig_ICU.update_layout(
+    updatemenus=[
+        dict(
+            active=0,
+            buttons=list([
+                dict(label="ALL",
+                     method="update",
+                     args=[{"visible": [True, True, True, True, True]},
+                           {"title": "Ontario COVID-19 ICU Cases"}]),
+                dict(label="CENTRAL",
+                     method="update",
+                     args=[{"visible": [True, False, False, False, False]},
+                           {"title": "Central Ontario COVID-19 ICU Cases",
+                           "annotations": []}]),
+                dict(label="TORONTO",
+                     method="update",
+                     args=[{"visible": [False, True, False, False, False]},
+                           {"title": "Toronto Ontario COVID-19 ICU Cases",
+                           "annotations": []}]),
+                dict(label="WEST",
+                     method="update",
+                     args=[{"visible": [False, False, True, False, False]},
+                           {"title": "West Ontario COVID-19 ICU Cases",
+                           "annotations": []}]),
+                dict(label="EAST",
+                     method="update",
+                     args=[{"visible": [False, False, False, True, False]},
+                           {"title": "East Ontario COVID-19 ICU Cases",
+                           "annotations": []}]),
+                dict(label="NORTH",
+                     method="update",
+                     args=[{"visible": [False, False, False, False, True]},
+                           {"title": "North Ontario COVID-19 ICU Cases",
+                           "annotations": []}]),
+            ]),
+        )
+    ])
+
+# Set title
+fig_ICU.update_layout(title_text="Ontario COVID-19 ICU Cases")
+
+
+
+## compute Ontario Vaccine Administration
+df_Vaccine = df_Vaccine.loc[df_Vaccine['province'] == 'Ontario']
+df_Vaccine['date_vaccine_administered']= pd.to_datetime(df_Vaccine['date_vaccine_administered'], dayfirst = True)
+df_Vaccine.reset_index(inplace = True, drop = True)
+fig_Vaccine = px.line(df_Vaccine, x = 'date_vaccine_administered', y = 'avaccine', 
+              title = 'Ontario Daily Vaccine Administration',
+              labels={
+                  'date_vaccine_administered': 'Date',
+                  'avaccine': 'Vaccine Administered'
+              })
 
 
 #functions to compute necessary values for dashboard
@@ -181,15 +279,27 @@ app.layout = dbc.Container(
 #             ],
 #             align="center",
 #         className="h-25"),
-        # COVID-19 Positive Rate by Public Health Unit
+        
+        # Ontario ICU and Positive Rate
         dbc.Row(
-            [
-                #dbc.Col(id="phu-positive",md=0, width=0),
+            [   
+                # COVID-19 ICU Cases by 5 Regions
+                dbc.Col(dcc.Graph(id='covid19-icu',figure=fig_ICU),id="line-box",md=0,width=0),
+                # COVID-19 Positive Rate by Public Health Unit
                 dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box",md=6,width=6),
             ],
             align="center",
-        className="h-85")
-
+        className="h-85"),
+        
+        # Ontario Vaccine Administration
+        dbc.Row(
+            [   
+                dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=0,width=0),   
+            ],
+            align="center",
+        className="h-95"),
+        
+       
     ],
     fluid=True,
     style={"height":"100vh"}
@@ -211,4 +321,5 @@ def update_figure(clickData):
 
 if __name__ == '__main__':
     # port=8000, host='127.0.0.1'
+    # debug=True
     app.run_server(debug=True)
