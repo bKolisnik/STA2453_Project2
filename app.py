@@ -75,31 +75,31 @@ fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_CENTRAL.date),
                y=list(df_ICU_CENTRAL.ICU),
                name="CENTRAL",
-               line=dict(color="#E74C3C")))
+               line=dict(color="#FFD700")))
 
 fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_TORONTO.date),
                y=list(df_ICU_TORONTO.ICU),
                name="TORONTO",
-               line=dict(color="#8E44AD")))
+               line=dict(color="#E74C3C")))
 
 fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_WEST.date),
                y=list(df_ICU_WEST.ICU),
                name="WEST",
-               line=dict(color="#3498DB")))
+               line=dict(color="#FF8C00")))
 
 fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_EAST.date),
                y=list(df_ICU_EAST.ICU),
                name="EAST",
-               line=dict(color="#2ECC71")))
+               line=dict(color="#8E44AD")))
 
 fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_NORTH.date),
                y=list(df_ICU_NORTH.ICU),
                name="NORTH",
-               line=dict(color="#D35400")))
+               line=dict(color="#000080")))
 
 fig_ICU.update_layout(
     updatemenus=[
@@ -180,8 +180,9 @@ if(new_positive_today < 0):
 with open("Ministry_of_Health_Public_Health_Unit_Boundary Simplified.json") as f:
     boundary_data = json.load(f)
 
-fig = px.choropleth_mapbox(df, geojson=boundary_data, featureidkey='properties.PHU_ID', locations='PHU_NUM', color='ACTIVE_CASES',
-                           color_continuous_scale="YlOrRd",
+fig = px.choropleth_mapbox(df, geojson=boundary_data, featureidkey='properties.PHU_ID', 
+                           locations='PHU_NUM', color='ACTIVE_CASES',
+                           #color_continuous_scale="agsunset",
                            range_color=(0, 4000),
                            mapbox_style="carto-positron",
                            zoom=4, center = {"lat": 48.31, "lon": -84.73},
