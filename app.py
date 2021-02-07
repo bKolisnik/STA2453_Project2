@@ -31,6 +31,49 @@ df_test = get_data_from_url('https://data.ontario.ca/dataset/a2dfa674-a173-45b3-
 df_ICU = get_data_from_url('https://data.ontario.ca/dataset/8f3a449b-bde5-4631-ada6-8bd94dbc7d15/resource/e760480e-1f95-4634-a923-98161cfb02fa/download/region_hospital_icu_covid_data.csv')
 # COVID-19 Ontario Vaccine Data
 df_Vaccine = get_data_from_url('https://raw.githubusercontent.com/ccodwg/Covid19Canada/master/timeseries_prov/vaccine_administration_timeseries_prov.csv')
+# COVID-19 Ontario Age and Gender Data
+df_age_gender = get_data_from_url('https://data.ontario.ca/dataset/f4112442-bdc8-45d2-be3c-12efae72fb27/resource/455fd63b-603d-4608-8216-7d8647f43350/download/conposcovidloc.csv')
+
+
+
+# modify gender feature to only contain female, male and other
+df_age_gender.Client_Gender = df_age_gender.Client_Gender.replace(
+    {'FEMALE': 'FEMALE', 'MALE': 'MALE', 
+    'UNSPECIFIED': 'OTHER', 
+    'GENDER DIVERSE': 'OTHER'})
+
+# drop the missing age group and 
+df_age_gender = df_age_gender.loc[df_age_gender.Age_Group != 'UNKNOWN']
+df_age_gender.Age_Group.dropna(inplace = True)
+# change age group names
+df_age_gender.Age_Group = df_age_gender.Age_Group.replace(
+    {'<20': '0-19', '20s': '20-29', '30s': '30-39',
+    '40s': '40-49', '50s': '50-59', '60s': '60-69',
+    '70s': '70-79', '80s': '80-89', '90s': '90-99'})
+
+# only keep case report date, gender and age
+df_age_gender = df_age_gender[['Case_Reported_Date', 'Age_Group', 'Client_Gender']]
+df_age_only = df_age_gender[['Case_Reported_Date', 'Age_Group']]
+
+# compute total count groupby age and gender
+df_age_gender = df_age_gender.groupby(by=['Age_Group', 'Client_Gender']).count()
+df_age_gender = df_age_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))
+df_age_gender.reset_index(inplace = True)
+# compute total count groupby age
+df_age_only = df_age_only.groupby(by=['Age_Group']).count()
+df_age_only = df_age_only.apply(lambda x: 100 * x / float(x.sum()))
+df_age_only.reset_index(inplace = True)
+# merge the df_age_gender and df_age_only
+df_age_gender = df_age_gender.merge(df_age_only, on = 'Age_Group')
+# compute the distribution of age and gender
+df_age_gender['percent'] = df_age_gender['Case_Reported_Date_x'] * df_age_gender['Case_Reported_Date_y']/100
+
+fig_age_gender = px.bar(df_age_gender, x="percent", y="Age_Group", color="Client_Gender", 
+             title = 'Age and Gender Distribution of All the COVID-19 Cases in Ontario',
+             labels={'percent':'Proportion (%)', 'Age_Group': 'Age Group (years)',
+                    'Client_Gender': 'Gender'})
+
+
 
 
 #phu_data_rolling = pd.read_csv('Ontario_PHU.csv')
@@ -292,10 +335,12 @@ app.layout = dbc.Container(
             align="center",
         className="h-85"),
         
-        # Ontario Vaccine Administration
+        # Ontario Vaccine Administration and age and gender distribution
         dbc.Row(
-            [   
-                dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=0,width=0),   
+            [   # Vaccine
+                dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=0,width=0),
+                # age and gender distribution
+                dbc.Col(dcc.Graph(id='covid19-ageGender',figure=fig_age_gender),id="ageGender-box",md=6,width=6),   
             ],
             align="center",
         className="h-95"),
