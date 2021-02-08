@@ -55,6 +55,38 @@ df_age_gender.Age_Group = df_age_gender.Age_Group.replace(
 df_age_gender = df_age_gender[['Case_Reported_Date', 'Age_Group', 'Client_Gender']]
 df_age_only = df_age_gender[['Case_Reported_Date', 'Age_Group']]
 
+# create bar plots of total cases, cases by age groups, cases by exposure:
+df_age_gender_date = df_age_gender[['Case_Reported_Date', 'Age_Group', 'Client_Gender']]
+bar_df = df_age_gender_date.groupby('Case_Reported_Date')['Client_Gender'].agg(['count'])
+bar_df.reset_index(inplace = True)
+# ax = plt.subplot(111)
+# ax.bar(pd.to_datetime(bar_df.iloc[:, 0]), bar_df.iloc[:, 1], width=10)
+# ax.xaxis_date()
+# plt.show()
+
+fig_bar1 = px.bar(x= pd.to_datetime(bar_df.iloc[:, 0]), y= bar_df.iloc[:, 1])
+fig_bar1.update_layout(
+    title="COVID-19 cases in Ontario by case reported date",
+    xaxis_title="Case Reported Date",
+    yaxis_title="Number of reported cases")
+
+age_bar_df = df_age_gender_date.groupby(['Case_Reported_Date', 'Age_Group'])['Client_Gender'].agg(['count'])
+age_bar_df.reset_index(inplace = True)
+age_bar_df['Age_Group'] = age_bar_df['Age_Group'].astype(object)
+fig_bar2 = px.bar(x= pd.to_datetime(age_bar_df['Case_Reported_Date']), y= age_bar_df['count'], color = age_bar_df['Age_Group'])
+fig_bar2.update_layout(
+    title="COVID-19 cases in Ontario by case reported date (by age group)",
+    xaxis_title="Case Reported Date",
+    yaxis_title="Number of reported cases")
+
+gender_bar_df = df_age_gender_date.groupby(['Case_Reported_Date', 'Client_Gender'])['Client_Gender'].agg(['count'])
+gender_bar_df.reset_index(inplace = True)
+fig_bar3 = px.bar(x= pd.to_datetime(gender_bar_df['Case_Reported_Date']), y= gender_bar_df['count'], color = gender_bar_df['Client_Gender'])
+fig_bar3.update_layout(
+    title="COVID-19 cases in Ontario by case reported date (by gender)",
+    xaxis_title="Case Reported Date",
+    yaxis_title="Number of reported cases")
+
 # compute total count groupby age and gender
 df_age_gender = df_age_gender.groupby(by=['Age_Group', 'Client_Gender']).count()
 df_age_gender = df_age_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))
@@ -344,8 +376,25 @@ app.layout = dbc.Container(
             ],
             align="center",
         className="h-95"),
-        
-       
+
+        dbc.Row(
+            [
+                dbc.Col(dcc.Graph(id='covid19-casebar',figure=fig_bar1),id="ovid19-casebar",md=6,width=6),
+
+                dbc.Col(dcc.Graph(id='covid19-casebar2',figure=fig_bar2),id="ovid19-casebar2",md=6,width=6),
+
+            ],
+            align="center",
+        className="h-95"),
+
+        dbc.Row(
+            [
+                dbc.Col(dcc.Graph(id='covid19-casebar3',figure=fig_bar3),id="ovid19-casebar3",md=6,width=6),
+
+            ],
+            align="center",
+        className="h-95"),
+
     ],
     fluid=True,
     style={"height":"100vh"}
