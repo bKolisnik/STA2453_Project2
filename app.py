@@ -136,10 +136,11 @@ df_test_current['pop'] = (df_test_current['test_volumes_7d_avg'] / df_test_curre
 df = df.merge(df_test_current, left_on='PHU_NUM', right_on='PHU_num')
 df['positive_rate'] = (df['ACTIVE_CASES']/df['pop']) * 100
 df = df.sort_values(by = 'positive_rate')
-fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700, 
+fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700,
+                           # color='positive_rate',
+                           # color_continuous_scale="purpor",
                            labels={'positive_rate': 'COVID-19 Positive Rate %',
                                    'PHU_NAME': 'Public Health Unit'})
-
 
 ## compute the ICU cases by different region
 fig_ICU = go.Figure()
@@ -155,31 +156,31 @@ fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_CENTRAL.date),
                y=list(df_ICU_CENTRAL.ICU),
                name="CENTRAL",
-               line=dict(color="#FFD700")))
+               line=dict(color="#7f8bf5")))
 
 fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_TORONTO.date),
                y=list(df_ICU_TORONTO.ICU),
                name="TORONTO",
-               line=dict(color="#E74C3C")))
+               line=dict(color="#445bab")))
 
 fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_WEST.date),
                y=list(df_ICU_WEST.ICU),
                name="WEST",
-               line=dict(color="#FF8C00")))
+               line=dict(color="#0fba7c")))
 
 fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_EAST.date),
                y=list(df_ICU_EAST.ICU),
                name="EAST",
-               line=dict(color="#8E44AD")))
+               line=dict(color="#4b9cfc")))
 
 fig_ICU.add_trace(
     go.Scatter(x=list(df_ICU_NORTH.date),
                y=list(df_ICU_NORTH.ICU),
                name="NORTH",
-               line=dict(color="#000080")))
+               line=dict(color="#d461f2")))
 
 fig_ICU.update_layout(
     updatemenus=[
@@ -262,6 +263,7 @@ with open("Ministry_of_Health_Public_Health_Unit_Boundary Simplified.json") as f
 
 fig = px.choropleth_mapbox(df, geojson=boundary_data, featureidkey='properties.PHU_ID', 
                            locations='PHU_NUM', color='ACTIVE_CASES',
+                           color_continuous_scale="purpor",
                            #color_continuous_scale="agsunset",
                            range_color=(0, 4000),
                            mapbox_style="carto-positron",
@@ -379,7 +381,7 @@ app.layout = dbc.Container(
                 # COVID-19 ICU Cases by 5 Regions
                 dbc.Col(dcc.Graph(id='covid19-icu',figure=fig_ICU),id="line-box",md=0,width=0),
                 # COVID-19 Positive Rate by Public Health Unit
-                dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box",md=6,width=6),
+                dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box",md=7,width=6),
             ],
             align="center",
         className="h-85"),
@@ -389,7 +391,7 @@ app.layout = dbc.Container(
             [   # Vaccine
                 dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=0,width=0),
                 # age and gender distribution
-                dbc.Col(dcc.Graph(id='covid19-ageGender',figure=fig_age_gender),id="ageGender-box",md=6,width=6),   
+                dbc.Col(dcc.Graph(id='covid19-ageGender',figure=fig_age_gender),id="ageGender-box",md=6,width=6),
             ],
             align="center",
         className="h-95"),
