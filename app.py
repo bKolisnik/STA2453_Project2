@@ -295,58 +295,70 @@ app.layout = dbc.Container(
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
                         [dbc.Row([dbc.Col([html.H4("New Cases Today", className="card-title"),
-                            html.H1(str(new_positive_today)),
+                            html.H1('{:,}'.format(new_positive_today)),
                             ], width=6),
                             dbc.Col([html.H4("Total Cases", className="card-title"),
-                            html.H1(str(total_cases)),
+                            html.H1('{:,}'.format(total_cases)),
                             ], width=6)
                         ])
                             
                         ]
                     ),
-                    style={'text-align':'center'},outline=True),md=6, width=6),
+                    style={'text-align':'center',
+                           'margin-top': '10px',
+                           'margin-bottom': '5px',
+                           'margin-left': '15px'},outline=True),md=6, width=6),
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
                         [dbc.Row([dbc.Col([html.H4("Deaths Today", className="card-title"),
-                            html.H1(str(new_deaths_today)),
+                            html.H1('{:,}'.format(new_deaths_today)),
                             ], width=6),
                             dbc.Col([html.H4("Total Deaths", className="card-title"),
-                            html.H1(str(total_deaths)),
+                            html.H1('{:,}'.format(total_deaths)),
                             ], width=6)
                         ])
                             
                         ]
                     ),
-                    style={'text-align':'center'},outline=True),md=6, width=6),
+                    style={'text-align':'center',
+                           'margin-top': '10px',
+                           'margin-bottom': '5px',
+                           'margin-right': '15px'},outline=True),md=6, width=6),
             ]),
         dbc.Row(
             [
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
                         [dbc.Row([dbc.Col([html.H4("Recovered Today", className="card-title"),
-                            html.H1(str(new_recovered_today)),
+                            html.H1('{:,}'.format(new_recovered_today)),
                             ], width=6),
                             dbc.Col([html.H4("Total Recovered", className="card-title"),
-                            html.H1(str(total_recoveries)),
+                            html.H1('{:,}'.format(total_recoveries)),
                             ], width=6)
                         ])
                             
                         ]
                     ),
-                    style={'text-align':'center'},outline=True),md=6, width=6),
+                    style={'text-align':'center',
+                           'margin-top': '10px',
+                           'margin-bottom': '5px',
+                           'margin-left': '15px'},outline=True),md=6, width=6),
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
                         [dbc.Row([dbc.Col([html.H4("Tests Completed Today", className="card-title"),
-                            html.H1(str(tests_today)),
+                            html.H1('{:,}'.format(tests_today)),
                             ], width=6),
                             dbc.Col([html.H4("Total Tests Completed", className="card-title"),
-                            html.H1(str(total_tests)),
+                            html.H1('{:,}'.format(total_tests)),
                             ], width=6)
                         ])
                             
                         ]
                     ),
-                    style={'text-align':'center'},outline=True),md=6, width=6),
+                    style={'text-align':'center',
+                           'margin-top': '10px',
+                           'margin-bottom': '5px',
+                           'margin-right': '15px'}, outline=True),md=6, width=6),
             ]),
         dbc.Row(
             [
