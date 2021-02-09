@@ -1,0 +1,20 @@
+body {
+    font-family: sans-serif;
+}
+h1 {
+  font-family: Helvetica, sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  margin: 15px 5px 15px 5px;
+  color: #353839;
+}
+
+h2 {
+  font-family: Helvetica, sans-serif;
+  font-size: 30px;
+}
+
+h3, h4, h5, h6 {
+    font-family: "Helvetica";
+    color: DimGray;
+}
