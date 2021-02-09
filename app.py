@@ -69,6 +69,7 @@ fig_bar1.update_layout(
     title="COVID-19 cases in Ontario by case reported date",
     xaxis_title="Case Reported Date",
     yaxis_title="Number of reported cases")
+fig_bar1.update_traces(hovertemplate='Date: %{x} <br>Count: %{y}', selector=dict(type='bar'))
 
 age_bar_df = df_age_gender_date.groupby(['Case_Reported_Date', 'Age_Group'])['Client_Gender'].agg(['count'])
 age_bar_df.reset_index(inplace = True)
@@ -77,7 +78,9 @@ fig_bar2 = px.bar(x= pd.to_datetime(age_bar_df['Case_Reported_Date']), y= age_ba
 fig_bar2.update_layout(
     title="COVID-19 cases in Ontario by case reported date (by age group)",
     xaxis_title="Case Reported Date",
-    yaxis_title="Number of reported cases")
+    yaxis_title="Number of reported cases",
+    legend_title_text='Age Group')
+fig_bar2.update_traces(hovertemplate='Date: %{x} <br>Count: %{y}', selector=dict(type='bar'))
 
 gender_bar_df = df_age_gender_date.groupby(['Case_Reported_Date', 'Client_Gender'])['Client_Gender'].agg(['count'])
 gender_bar_df.reset_index(inplace = True)
@@ -85,7 +88,9 @@ fig_bar3 = px.bar(x= pd.to_datetime(gender_bar_df['Case_Reported_Date']), y= gen
 fig_bar3.update_layout(
     title="COVID-19 cases in Ontario by case reported date (by gender)",
     xaxis_title="Case Reported Date",
-    yaxis_title="Number of reported cases")
+    yaxis_title="Number of reported cases",
+    legend_title_text='Gender')
+fig_bar3.update_traces(hovertemplate='Date: %{x} <br>Count: %{y}', selector=dict(type='bar'))
 
 # compute total count groupby age and gender
 df_age_gender = df_age_gender.groupby(by=['Age_Group', 'Client_Gender']).count()
@@ -379,18 +384,16 @@ app.layout = dbc.Container(
 
         dbc.Row(
             [
+                dbc.Col([html.H6("Filter"),dcc.Dropdown(
+                    options=[
+                        {'label': 'None', 'value': 'all'},
+                        {'label': 'Age', 'value': 'age'},
+                        {'label': 'Gender', 'value': 'gender'}
+                    ],
+                    value='all',
+                    clearable=False,
+                id="dropdown")],md=1,width=1),
                 dbc.Col(dcc.Graph(id='covid19-casebar',figure=fig_bar1),id="ovid19-casebar",md=6,width=6),
-
-                dbc.Col(dcc.Graph(id='covid19-casebar2',figure=fig_bar2),id="ovid19-casebar2",md=6,width=6),
-
-            ],
-            align="center",
-        className="h-95"),
-
-        dbc.Row(
-            [
-                dbc.Col(dcc.Graph(id='covid19-casebar3',figure=fig_bar3),id="ovid19-casebar3",md=6,width=6),
-
             ],
             align="center",
         className="h-95"),
@@ -399,6 +402,19 @@ app.layout = dbc.Container(
     fluid=True,
     style={"height":"100vh"}
 )
+
+@app.callback(
+    Output('covid19-casebar', 'figure'),
+    [Input('dropdown', 'value')])
+def update_figure(value):    
+    if value is not None:            
+        if value=='all':
+            return fig_bar1
+        elif value=='age':
+            return fig_bar2
+        else:
+            return fig_bar3
+    return fig_bar1
 
 '''
 @app.callback(
