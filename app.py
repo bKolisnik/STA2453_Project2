@@ -33,7 +33,14 @@ df_ICU = get_data_from_url('https://data.ontario.ca/dataset/8f3a449b-bde5-4631-a
 df_Vaccine = get_data_from_url('https://raw.githubusercontent.com/ccodwg/Covid19Canada/master/timeseries_prov/vaccine_administration_timeseries_prov.csv')
 # COVID-19 Ontario Age and Gender Data
 df_age_gender = get_data_from_url('https://data.ontario.ca/dataset/f4112442-bdc8-45d2-be3c-12efae72fb27/resource/455fd63b-603d-4608-8216-7d8647f43350/download/conposcovidloc.csv')
+#COVID-19 Testing Centers
+df_testing_centre = get_data_from_url('https://data.ontario.ca/dataset/covid-19-assessment-centre-locations/resource/c60993bb-3988-4648-9be9-398dee480514/download/assessment_centre_locations.csv')
 
+#modify testing centres to only contain currently active testing centres
+df_testing_centre = df_testing_centre.loc[df_testing_centre['active']=='Yes']
+df_testing_centre = df_testing_centre.loc[(df_testing_centre['latitude'].isna()==False)&(df_testing_centre['longitude'].isna()==False)]
+df_testing_centre['longitude'] = pd.to_numeric(df_testing_centre['longitude'].str.strip())
+df_testing_centre.loc[df_testing_centre['phone'].isna(),'phone'] = 'N/A'
 
 
 # modify gender feature to only contain female, male and other
@@ -261,6 +268,7 @@ if(new_positive_today < 0):
 with open("Ministry_of_Health_Public_Health_Unit_Boundary Simplified.json") as f:
     boundary_data = json.load(f)
 
+
 fig = px.choropleth_mapbox(df, geojson=boundary_data, featureidkey='properties.PHU_ID', 
                            locations='PHU_NUM', color='ACTIVE_CASES',
                            color_continuous_scale="purpor",
@@ -272,6 +280,22 @@ fig = px.choropleth_mapbox(df, geojson=boundary_data, featureidkey='properties.P
                            labels={'PHU_NUM': 'PHU Number'},
                            hover_data = ['PHU_NAME']
                           )
+
+#fig2 = px.scatter_geo(df_testing_centre, lat='latitude', lon='longitude', hover_name='location_name', hover_data=['PHU','phone','website'])
+#fig.add_scattergeo()
+fig2 = px.scatter_mapbox(df_testing_centre,lat='latitude',lon='longitude',hover_name='location_name',hover_data=['phone','website'],mapbox_style="carto-positron",zoom=4, center = {"lat": 48.31, "lon": -84.73})
+fig.add_trace(fig2.data[0])
+
+'''
+fig = px.choropleth(df, geojson=boundary_data, featureidkey='properties.PHU_ID', 
+                           locations='PHU_NUM', color='ACTIVE_CASES',
+                           color_continuous_scale="purpor",
+                           #color_continuous_scale="agsunset",
+                           range_color=(0, 4000),
+                           scope='north america', center = {"lat": 48.31, "lon": -84.73},
+                           labels={'PHU_NUM': 'PHU Number'},
+                           hover_data = ['PHU_NAME']
+)'''
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
 '''
@@ -362,6 +386,12 @@ app.layout = dbc.Container(
                            'margin-bottom': '5px',
                            'margin-right': '15px'}, outline=True),md=6, width=6),
             ]),
+        dbc.Row(
+            [
+                dbc.Col(md=6, width=6),
+                dbc.Col(html.H4("Ontario COVID-19 Active Cases and Test Locations"),md=6,width=6),
+            ],
+            align="center"),
         dbc.Row(
             [
                 dbc.Col(id="phu-zone",md=6, width=6),
