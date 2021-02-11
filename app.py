@@ -122,8 +122,8 @@ fig_age_gender = px.bar(df_age_gender, x="percent", y="Age_Group", color="Client
 
 #phu_data_rolling = pd.read_csv('Ontario_PHU.csv')
 #ontario_daily = pd.read_csv('Ontario_status.csv')
-current_date = max(phu_data_rolling['FILE_DATE'].unique())
-df = phu_data_rolling.loc[phu_data_rolling['FILE_DATE'] == current_date]
+df = phu_data_rolling.groupby('PHU_NAME')['FILE_DATE'].max().reset_index()
+df = df.merge(phu_data_rolling, on = ['PHU_NAME', 'FILE_DATE'])
 df.reset_index(inplace=True, drop=True)
 
 
