@@ -12,6 +12,7 @@ import plotly.express as px
 import pandas as pd
 
 import json
+import numpy as np
 import pandas as pd
 import io
 import requests
@@ -125,7 +126,9 @@ fig_age_gender = px.bar(df_age_gender, x="percent", y="Age_Group", color="Client
 df = phu_data_rolling.groupby('PHU_NAME')['FILE_DATE'].max().reset_index()
 df = df.merge(phu_data_rolling, on = ['PHU_NAME', 'FILE_DATE'])
 df.reset_index(inplace=True, drop=True)
-
+#Needed for plotting phu bars
+phu_dict_list = [{'label':name, 'value':name} for name in phu_data_rolling['PHU_NAME'].unique() if name is not np.nan]
+phu_dict_list.append({'label':'ONTARIO','value':'ONTARIO'})
 
 ## compute the population in each Public Health Unit
 # convert string to integer
@@ -245,6 +248,7 @@ fig_Vaccine = px.line(df_Vaccine, x = 'date_vaccine_administered', y = 'avaccine
 
 
 #functions to compute necessary values for dashboard
+### necessary global variables
 ontario_daily.loc[:,'new_positive'] = ontario_daily['Confirmed Positive'].diff()
 ontario_daily.loc[:,'new_cases']= ontario_daily['Total Cases'].diff()
 ontario_daily.loc[:,'new_resolved']= ontario_daily['Resolved'].diff()
@@ -264,6 +268,18 @@ tests_today = int(today['Total tests completed in the last day'])
 
 if(new_positive_today < 0):
     new_positive_today = 0
+###
+
+###Bar plot for phu data
+colors = ['blue','green','yellow']
+
+phu_bar = go.Figure(data=[go.Bar(
+    x=['Active', 'Recovered', 'Deaths'],
+    y=[active_cases, total_recoveries, total_deaths],
+    marker_color=colors # marker color can be a single color value or an iterable
+)])
+#phu_bar.update_layout(title_text='Number of cases in Ontario')
+
 
 with open("Ministry_of_Health_Public_Health_Unit_Boundary Simplified.json") as f:
     boundary_data = json.load(f)
@@ -388,13 +404,17 @@ app.layout = dbc.Container(
             ]),
         dbc.Row(
             [
-                dbc.Col(md=6, width=6),
+                dbc.Col(dbc.Row([dbc.Col(html.H4('Number of Cases in '),md=6,width=6),dbc.Col(dcc.Dropdown(
+                    options=phu_dict_list,
+                    value='ONTARIO',
+                    clearable=False,
+                id="phu_dropdown"),md=6,width=6)],align="center"),md=6, width=6),
                 dbc.Col(html.H4("Ontario COVID-19 Active Cases and Test Locations"),md=6,width=6),
             ],
             align="center"),
         dbc.Row(
             [
-                dbc.Col(id="phu-zone",md=6, width=6),
+                dbc.Col(dcc.Graph(id='phu-bar',figure=phu_bar),id="phu-zone",md=6, width=6),
                 dbc.Col(dcc.Graph(id='ontario-map',figure=fig),id="map-box",md=6,width=6),
             ],
             align="center",
@@ -446,6 +466,25 @@ app.layout = dbc.Container(
     fluid=True,
     style={"height":"100vh"}
 )
+
+@app.callback(
+    Output('phu-bar', 'figure'),
+    [Input('phu_dropdown', 'value')])
+def update_phu_bar(value):
+    #too many plots to precompute. Compute plot dynamically  
+    if value is not None:            
+        if value=='ONTARIO':
+            return phu_bar
+        else:
+            #compute new plot
+            phu_df = phu_data_rolling.loc[phu_data_rolling['PHU_NAME']==value]
+            phu_df = phu_df.loc[phu_df['FILE_DATE'] == phu_df['FILE_DATE'].max()]
+            return go.Figure(data=[go.Bar(
+                x=['Active', 'Recovered', 'Deaths'],
+                y=[int(phu_df['ACTIVE_CASES']), int(phu_df['RESOLVED_CASES']), int(phu_df['DEATHS'])],
+                marker_color=colors
+            )])
+    return phu_bar
 
 @app.callback(
     Output('covid19-casebar', 'figure'),
