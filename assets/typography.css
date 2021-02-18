@@ -14,7 +14,19 @@ h2 {
   font-size: 30px;
 }
 
-h3, h4, h5, h6 {
+h3 {
+    font-family: "Verdana";
+    color: #353839;
+    margin: 15px 25px 15px 27px;
+}
+
+h4, h6 {
     font-family: "Helvetica";
     color: DimGray;
+}
+
+h5 {
+    font-family: "Helvetica";
+    color: #353839;
+    font-size: 25px;
 }

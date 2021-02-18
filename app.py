@@ -200,38 +200,38 @@ fig_ICU.update_layout(
                 dict(label="ALL",
                      method="update",
                      args=[{"visible": [True, True, True, True, True]},
-                           {"title": "Ontario COVID-19 ICU Cases"}]),
+                           {"title": ""}]),
                 dict(label="CENTRAL",
                      method="update",
                      args=[{"visible": [True, False, False, False, False]},
-                           {"title": "Central Ontario COVID-19 ICU Cases",
+                           {"title": "",
                            "annotations": []}]),
                 dict(label="TORONTO",
                      method="update",
                      args=[{"visible": [False, True, False, False, False]},
-                           {"title": "Toronto Ontario COVID-19 ICU Cases",
+                           {"title": "",
                            "annotations": []}]),
                 dict(label="WEST",
                      method="update",
                      args=[{"visible": [False, False, True, False, False]},
-                           {"title": "West Ontario COVID-19 ICU Cases",
+                           {"title": "",
                            "annotations": []}]),
                 dict(label="EAST",
                      method="update",
                      args=[{"visible": [False, False, False, True, False]},
-                           {"title": "East Ontario COVID-19 ICU Cases",
+                           {"title": "",
                            "annotations": []}]),
                 dict(label="NORTH",
                      method="update",
                      args=[{"visible": [False, False, False, False, True]},
-                           {"title": "North Ontario COVID-19 ICU Cases",
+                           {"title": "",
                            "annotations": []}]),
             ]),
         )
     ])
 
 # Set title
-fig_ICU.update_layout(title_text="Ontario COVID-19 ICU Cases")
+#fig_ICU.update_layout(title_text="Ontario COVID-19 ICU Cases")
 
 
 
@@ -299,7 +299,9 @@ fig = px.choropleth_mapbox(df, geojson=boundary_data, featureidkey='properties.P
 
 #fig2 = px.scatter_geo(df_testing_centre, lat='latitude', lon='longitude', hover_name='location_name', hover_data=['PHU','phone','website'])
 #fig.add_scattergeo()
-fig2 = px.scatter_mapbox(df_testing_centre,lat='latitude',lon='longitude',hover_name='location_name',hover_data=['phone','website'],mapbox_style="carto-positron",zoom=4, center = {"lat": 48.31, "lon": -84.73})
+fig2 = px.scatter_mapbox(df_testing_centre,lat='latitude',lon='longitude',
+                         hover_name='location_name',hover_data=['phone','website'],
+                         mapbox_style="carto-positron",zoom=4, center = {"lat": 48.31, "lon": -84.73})
 fig.add_trace(fig2.data[0])
 
 '''
@@ -328,10 +330,11 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-### HTML components go here, control the heights using h classes with percent of screen height
+### HTML components go here, control the heights using h classes with percent of screen height ##########
 app.layout = dbc.Container(
     [
         dbc.Row(dbc.Col(html.H1("Ontario COVID-19 Tracker"))),
+        html.Hr(),
         dbc.Row(
             [
                 dbc.Col(dbc.Card(
@@ -402,23 +405,66 @@ app.layout = dbc.Container(
                            'margin-bottom': '5px',
                            'margin-right': '15px'}, outline=True),md=6, width=6),
             ]),
+
+        # main choropleth map
+        dbc.Row(html.H3("Ontario COVID-19 Active Cases and Test Locations")),
+        dbc.Row(
+            dbc.Col(dcc.Graph(id='ontario-map',figure=fig),id="map-box"),
+            style={'text-align':'center',
+                           'margin-top': '10px',
+                           'margin-bottom': '10px',
+                           'margin-left': '20px',
+                           'margin-right': '10px'}),
+        # Cases and ICU plots
         dbc.Row(
             [
-                dbc.Col(dbc.Row([dbc.Col(html.H4('Number of Cases in '),md=6,width=6),dbc.Col(dcc.Dropdown(
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col(html.H5('Number of Cases in'),md=6,width=4),
+                                  dbc.Col(dcc.Dropdown(
                     options=phu_dict_list,
                     value='ONTARIO',
                     clearable=False,
-                id="phu_dropdown"),md=6,width=6)],align="center"),md=6, width=6),
-                dbc.Col(html.H4("Ontario COVID-19 Active Cases and Test Locations"),md=6,width=6),
-            ],
-            align="center"),
-        dbc.Row(
-            [
-                dbc.Col(dcc.Graph(id='phu-bar',figure=phu_bar),id="phu-zone",md=6, width=6),
-                dbc.Col(dcc.Graph(id='ontario-map',figure=fig),id="map-box",md=6,width=6),
-            ],
-            align="center",
-        className="h-75"),
+                id="phu_dropdown"),md=6,width=8, align = "start")], align="start"),
+                         dbc.Row([dbc.Col(dcc.Graph(id='phu-bar',figure=phu_bar),id="phu-zone")])
+                         ]
+                    ),
+                    style={'text-align': 'start',
+                           'margin-top': '10px',
+                           'margin-bottom': '5px',
+                           'margin-left': '15px'}, outline=True), md=6, width=6),
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col([html.H5("Ontario COVID-19 ICU Cases", className="card-title"),
+                                           ]),
+                                  ]),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-icu',figure=fig_ICU),id="line-box")])
+
+                         ]
+                    ),
+                    style={'text-align': 'start',
+                           'margin-top': '10px',
+                           'margin-bottom': '5px',
+                           'margin-right': '15px'}, outline=True), md=6, width=6),
+            ]),
+
+        # dbc.Row(
+        #     [
+        #         dbc.Col(dbc.Row([dbc.Col(html.H4('Number of Cases in '),md=6,width=6),dbc.Col(dcc.Dropdown(
+        #             options=phu_dict_list,
+        #             value='ONTARIO',
+        #             clearable=False,
+        #         id="phu_dropdown"),md=6,width=6)],align="center"),md=6, width=6),
+        #         dbc.Col(html.H4("Ontario COVID-19 Active Cases and Test Locations"),md=6,width=6),
+        #     ],
+        #     align="center"),
+        # dbc.Row(
+        #     [
+        #         dbc.Col(dcc.Graph(id='phu-bar',figure=phu_bar),id="phu-zone",md=6, width=6),
+        #         dbc.Col(dcc.Graph(id='ontario-map',figure=fig),id="map-box",md=6,width=6),
+        #     ],
+        #     align="center",
+        # className="h-75"),
 #         dbc.Row(
 #             [
 #             ],
@@ -429,7 +475,7 @@ app.layout = dbc.Container(
         dbc.Row(
             [   
                 # COVID-19 ICU Cases by 5 Regions
-                dbc.Col(dcc.Graph(id='covid19-icu',figure=fig_ICU),id="line-box",md=0,width=0),
+                #dbc.Col(dcc.Graph(id='covid19-icu',figure=fig_ICU),id="line-box",md=0,width=0),
                 # COVID-19 Positive Rate by Public Health Unit
                 dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box",md=7,width=6),
             ],
@@ -474,16 +520,21 @@ def update_phu_bar(value):
     #too many plots to precompute. Compute plot dynamically  
     if value is not None:            
         if value=='ONTARIO':
+            phu_bar.update_layout(
+                margin=dict(l=25, r=25, t=30, b=25))
             return phu_bar
         else:
             #compute new plot
             phu_df = phu_data_rolling.loc[phu_data_rolling['PHU_NAME']==value]
             phu_df = phu_df.loc[phu_df['FILE_DATE'] == phu_df['FILE_DATE'].max()]
-            return go.Figure(data=[go.Bar(
+            phu_bar2 = go.Figure(data=[go.Bar(
                 x=['Active', 'Recovered', 'Deaths'],
                 y=[int(phu_df['ACTIVE_CASES']), int(phu_df['RESOLVED_CASES']), int(phu_df['DEATHS'])],
                 marker_color=colors
             )])
+            phu_bar2.update_layout(
+                margin=dict(l=25, r=25, t=30, b=25), yaxis_range=[0,100000])
+            return phu_bar2
     return phu_bar
 
 @app.callback(
