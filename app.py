@@ -153,85 +153,20 @@ fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700,
                                    'PHU_NAME': 'Public Health Unit'})
 
 ## compute the ICU cases by different region
-fig_ICU = go.Figure()
-df_ICU_CENTRAL = df_ICU.loc[df_ICU.oh_region == 'CENTRAL']
-df_ICU_TORONTO = df_ICU.loc[df_ICU.oh_region == 'TORONTO']
-df_ICU_NORTH = df_ICU.loc[df_ICU.oh_region == 'NORTH']
-df_ICU_WEST = df_ICU.loc[df_ICU.oh_region == 'WEST']
-df_ICU_EAST = df_ICU.loc[df_ICU.oh_region == 'EAST']
+df_ICU_ONTARIO = df_ICU.groupby('date')['date', 'ICU'].agg('sum')
+df_ICU_ONTARIO.reset_index(inplace = True)
+
+# get icu dropdown list
+icu_dict_list = [{'label':name, 'value':name} for name in df_ICU['oh_region'].unique()]
+icu_dict_list.append({'label':'ONTARIO','value':'ONTARIO'})
 
 
-# Add Traces
-fig_ICU.add_trace(
-    go.Scatter(x=list(df_ICU_CENTRAL.date),
-               y=list(df_ICU_CENTRAL.ICU),
-               name="CENTRAL",
-               line=dict(color="#7f8bf5")))
+fig_ICU = go.Figure(data=[go.Scatter(
+    x=list(df_ICU_ONTARIO.date),
+    y=list(df_ICU_ONTARIO.ICU),
+    name="ONTARIO",
+    line=dict(color="#d461f2"))])
 
-fig_ICU.add_trace(
-    go.Scatter(x=list(df_ICU_TORONTO.date),
-               y=list(df_ICU_TORONTO.ICU),
-               name="TORONTO",
-               line=dict(color="#445bab")))
-
-fig_ICU.add_trace(
-    go.Scatter(x=list(df_ICU_WEST.date),
-               y=list(df_ICU_WEST.ICU),
-               name="WEST",
-               line=dict(color="#0fba7c")))
-
-fig_ICU.add_trace(
-    go.Scatter(x=list(df_ICU_EAST.date),
-               y=list(df_ICU_EAST.ICU),
-               name="EAST",
-               line=dict(color="#4b9cfc")))
-
-fig_ICU.add_trace(
-    go.Scatter(x=list(df_ICU_NORTH.date),
-               y=list(df_ICU_NORTH.ICU),
-               name="NORTH",
-               line=dict(color="#d461f2")))
-
-fig_ICU.update_layout(
-    updatemenus=[
-        dict(
-            active=0,
-            buttons=list([
-                dict(label="ALL",
-                     method="update",
-                     args=[{"visible": [True, True, True, True, True]},
-                           {"title": ""}]),
-                dict(label="CENTRAL",
-                     method="update",
-                     args=[{"visible": [True, False, False, False, False]},
-                           {"title": "",
-                           "annotations": []}]),
-                dict(label="TORONTO",
-                     method="update",
-                     args=[{"visible": [False, True, False, False, False]},
-                           {"title": "",
-                           "annotations": []}]),
-                dict(label="WEST",
-                     method="update",
-                     args=[{"visible": [False, False, True, False, False]},
-                           {"title": "",
-                           "annotations": []}]),
-                dict(label="EAST",
-                     method="update",
-                     args=[{"visible": [False, False, False, True, False]},
-                           {"title": "",
-                           "annotations": []}]),
-                dict(label="NORTH",
-                     method="update",
-                     args=[{"visible": [False, False, False, False, True]},
-                           {"title": "",
-                           "annotations": []}]),
-            ]),
-        )
-    ])
-
-# Set title
-#fig_ICU.update_layout(title_text="Ontario COVID-19 ICU Cases")
 
 
 
@@ -435,11 +370,13 @@ app.layout = dbc.Container(
                            'margin-left': '15px'}, outline=True), md=6, width=6),
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
-                        [dbc.Row([dbc.Col([html.H5("Ontario COVID-19 ICU Cases", className="card-title"),
-                                           ]),
-                                  ]),
+                        [dbc.Row([dbc.Col(html.H5('Ontario COVID-19 ICU Cases'),md=6,width=4),
+                                  dbc.Col(dcc.Dropdown(
+                    options=icu_dict_list,
+                    value='ONTARIO',
+                    clearable=False,
+                id="icu_dropdown"),md=6,width=8, align = "start")], align="start"),
                          dbc.Row([dbc.Col(dcc.Graph(id='covid19-icu',figure=fig_ICU),id="line-box")])
-
                          ]
                     ),
                     style={'text-align': 'start',
@@ -536,6 +473,36 @@ def update_phu_bar(value):
                 margin=dict(l=25, r=25, t=30, b=25), yaxis_range=[0,100000])
             return phu_bar2
     return phu_bar
+
+# ICU Scatter Plot
+@app.callback(
+    Output('covid19-icu', 'figure'),
+    [Input('icu_dropdown', 'value')])
+def update_icu_scatter(value):
+    color_dict = {'CENTRAL': "#7f8bf5", 'TORONTO': "#445bab",
+                 'WEST': "#0fba7c", 'EAST': "#4b9cfc", 'NORTH': "#d461f2"}
+
+    #too many plots to precompute. Compute plot dynamically  
+    if value is not None:            
+        if value=='ONTARIO':
+            fig_ICU.update_layout(
+                margin=dict(l=25, r=25, t=30, b=25))
+            return fig_ICU
+        else:
+            #compute new plot
+            df_ICU_temp= df_ICU.loc[df_ICU.oh_region == value]
+            icu_temp = go.Figure(data=[go.Scatter(
+                x=list(df_ICU_temp.date),
+                y=list(df_ICU_temp.ICU),
+                name=value,
+                line=dict(color=color_dict[value]))])
+            
+            icu_temp.update_layout(
+                margin=dict(l=25, r=25, t=30, b=25), yaxis_range=[0,450])
+            return icu_temp
+    return icu_temp
+
+
 
 @app.callback(
     Output('covid19-casebar', 'figure'),
