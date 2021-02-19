@@ -114,7 +114,6 @@ df_age_gender = df_age_gender.merge(df_age_only, on = 'Age_Group')
 df_age_gender['percent'] = df_age_gender['Case_Reported_Date_x'] * df_age_gender['Case_Reported_Date_y']/100
 
 fig_age_gender = px.bar(df_age_gender, x="percent", y="Age_Group", color="Client_Gender", 
-             title = '',
              labels={'percent':'Proportion (%)', 'Age_Group': 'Age Group (years)',
                     'Client_Gender': 'Gender'})
 
@@ -148,11 +147,11 @@ df['positive_rate'] = (df['ACTIVE_CASES']/df['pop']) * 100
 df = df.sort_values(by = 'positive_rate')
 fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700,
                            # color='positive_rate',
-                           # color_continuous_scale="purpor",
-                           title = 'PHU Ranked by COVID-19 Positive Rate',
+                           #color_continuous_scale="purpor",
                            labels={'positive_rate': 'COVID-19 Positive Rate %',
                                    'PHU_NAME': 'Public Health Unit'})
 fig_positive_rate.update_layout(margin=dict(l=0))
+fig_positive_rate.update_traces(marker_color="#7289da")
 ## compute the ICU cases by different region
 df_ICU_ONTARIO = df_ICU.groupby('date')['date', 'ICU'].agg('sum')
 df_ICU_ONTARIO.reset_index(inplace = True)
@@ -163,11 +162,13 @@ icu_dict_list.append({'label':'ONTARIO','value':'ONTARIO'})
 
 
 fig_ICU = go.Figure(data=[go.Scatter(
-    x=list(df_ICU_ONTARIO.date),
-    y=list(df_ICU_ONTARIO.ICU),
+    x=df_ICU_ONTARIO.date,
+    y=df_ICU_ONTARIO.ICU,
     name="ONTARIO",
     line=dict(color="#7289da"))])
-
+fig_ICU.update_layout(
+    xaxis_title="Date",
+    yaxis_title="ICU")
 
 
 
@@ -176,7 +177,6 @@ df_Vaccine = df_Vaccine.loc[df_Vaccine['province'] == 'Ontario']
 df_Vaccine['date_vaccine_administered']= pd.to_datetime(df_Vaccine['date_vaccine_administered'], dayfirst = True)
 df_Vaccine.reset_index(inplace = True, drop = True)
 fig_Vaccine = px.line(df_Vaccine, x = 'date_vaccine_administered', y = 'avaccine', 
-              title = 'Ontario Daily Vaccine Administration',
               labels={
                   'date_vaccine_administered': 'Date',
                   'avaccine': 'Vaccine Administered'
@@ -419,7 +419,8 @@ app.layout = dbc.Container(
                     style={'text-align': 'start',
                            'margin-top': '20px',
                            'margin-bottom': '5px',
-                           'margin-right': '15px'}, outline=True), md=6, width=6),
+                           'margin-right': '15px',
+                           'height': '35rem'}, outline=True), md=6, width=6),
             ]),
 
         # dbc.Row(
@@ -447,13 +448,36 @@ app.layout = dbc.Container(
         
         # Ontario ICU and Positive Rate
         dbc.Row(
-            [   # Vaccine
-                dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=5,width=6),
-                # COVID-19 Positive Rate by Public Health Unit
-                dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box",md=7,width=6),
-            ],
-            align="start", form=True,
-        className="h-95"),
+            [
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col(html.H5('PHU Ranked by COVID-19 Positive Rate'))]),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box")])
+                         ]
+                    ),
+                    style={'text-align': 'start',
+                           'margin-top': '20px',
+                           'margin-bottom': '5px',
+                           'margin-left': '15px'}, outline=True), md=6, width=6),
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col(html.H5('Ontario Daily Vaccine Administration'))], align="start"),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box")])
+                         ]
+                    ),
+                    style={'text-align': 'start',
+                           'margin-top': '20px',
+                           'margin-bottom': '5px',
+                           'margin-right': '15px'}, outline=True), md=6, width=6),
+            ]),
+#         dbc.Row(
+#             [   # Vaccine
+#                 dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=5,width=6),
+#                 # COVID-19 Positive Rate by Public Health Unit
+#                 dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box",md=7,width=6),
+#             ],
+#             align="start", form=True,
+#         className="h-95"),
         
         # Ontario Vaccine Administration and age and gender distribution
         # dbc.Row(
@@ -528,13 +552,16 @@ def update_icu_scatter(value):
             #compute new plot
             df_ICU_temp= df_ICU.loc[df_ICU.oh_region == value]
             icu_temp = go.Figure(data=[go.Scatter(
-                x=list(df_ICU_temp.date),
-                y=list(df_ICU_temp.ICU),
+                x=df_ICU_temp.date,
+                y=df_ICU_temp.ICU,
                 name=value,
                 line=dict(color=color_dict[value]))])
             
             icu_temp.update_layout(
                 margin=dict(t=50), yaxis_range=[0,450])
+            icu_temp.update_layout(
+                xaxis_title="Date",
+                yaxis_title="ICU")
             return icu_temp
     return icu_temp
 
