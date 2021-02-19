@@ -74,7 +74,7 @@ bar_df.reset_index(inplace = True)
 
 fig_bar1 = px.bar(x= pd.to_datetime(bar_df.iloc[:, 0]), y= bar_df.iloc[:, 1])
 fig_bar1.update_layout(
-    title="COVID-19 cases in Ontario by case reported date",
+    title="",
     xaxis_title="Case Reported Date",
     yaxis_title="Number of reported cases")
 fig_bar1.update_traces(hovertemplate='Date: %{x} <br>Count: %{y}', selector=dict(type='bar'))
@@ -84,7 +84,7 @@ age_bar_df.reset_index(inplace = True)
 age_bar_df['Age_Group'] = age_bar_df['Age_Group'].astype(object)
 fig_bar2 = px.bar(x= pd.to_datetime(age_bar_df['Case_Reported_Date']), y= age_bar_df['count'], color = age_bar_df['Age_Group'])
 fig_bar2.update_layout(
-    title="COVID-19 cases in Ontario by case reported date (by age group)",
+    title="",
     xaxis_title="Case Reported Date",
     yaxis_title="Number of reported cases",
     legend_title_text='Age Group')
@@ -94,7 +94,7 @@ gender_bar_df = df_age_gender_date.groupby(['Case_Reported_Date', 'Client_Gender
 gender_bar_df.reset_index(inplace = True)
 fig_bar3 = px.bar(x= pd.to_datetime(gender_bar_df['Case_Reported_Date']), y= gender_bar_df['count'], color = gender_bar_df['Client_Gender'])
 fig_bar3.update_layout(
-    title="COVID-19 cases in Ontario by case reported date (by gender)",
+    title="",
     xaxis_title="Case Reported Date",
     yaxis_title="Number of reported cases",
     legend_title_text='Gender')
@@ -114,7 +114,7 @@ df_age_gender = df_age_gender.merge(df_age_only, on = 'Age_Group')
 df_age_gender['percent'] = df_age_gender['Case_Reported_Date_x'] * df_age_gender['Case_Reported_Date_y']/100
 
 fig_age_gender = px.bar(df_age_gender, x="percent", y="Age_Group", color="Client_Gender", 
-             title = 'Age and Gender Distribution of All the COVID-19 Cases in Ontario',
+             title = '',
              labels={'percent':'Proportion (%)', 'Age_Group': 'Age Group (years)',
                     'Client_Gender': 'Gender'})
 
@@ -149,9 +149,10 @@ df = df.sort_values(by = 'positive_rate')
 fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700,
                            # color='positive_rate',
                            # color_continuous_scale="purpor",
+                           title = 'PHU Ranked by COVID-19 Positive Rate',
                            labels={'positive_rate': 'COVID-19 Positive Rate %',
                                    'PHU_NAME': 'Public Health Unit'})
-
+fig_positive_rate.update_layout(margin=dict(l=0))
 ## compute the ICU cases by different region
 df_ICU_ONTARIO = df_ICU.groupby('date')['date', 'ICU'].agg('sum')
 df_ICU_ONTARIO.reset_index(inplace = True)
@@ -165,7 +166,7 @@ fig_ICU = go.Figure(data=[go.Scatter(
     x=list(df_ICU_ONTARIO.date),
     y=list(df_ICU_ONTARIO.ICU),
     name="ONTARIO",
-    line=dict(color="#d461f2"))])
+    line=dict(color="#7289da"))])
 
 
 
@@ -180,7 +181,7 @@ fig_Vaccine = px.line(df_Vaccine, x = 'date_vaccine_administered', y = 'avaccine
                   'date_vaccine_administered': 'Date',
                   'avaccine': 'Vaccine Administered'
               })
-
+fig_positive_rate.update_layout(margin=dict(r=0))
 
 #functions to compute necessary values for dashboard
 ### necessary global variables
@@ -206,7 +207,7 @@ if(new_positive_today < 0):
 ###
 
 ###Bar plot for phu data
-colors = ['blue','green','yellow']
+colors = ['#d9534f','#5cb85c','#7289da']
 
 phu_bar = go.Figure(data=[go.Bar(
     x=['Active', 'Recovered', 'Deaths'],
@@ -249,7 +250,7 @@ fig = px.choropleth(df, geojson=boundary_data, featureidkey='properties.PHU_ID',
                            labels={'PHU_NUM': 'PHU Number'},
                            hover_data = ['PHU_NAME']
 )'''
-fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, dragmode=False)
 
 '''
 fig2 = go.Figure(go.Choroplethmapbox(geojson=boundary_data, locations=df['PHU_NUM'], featureidkey='properties.PHU_ID',z=df['ACTIVE_CASES'],
@@ -355,32 +356,68 @@ app.layout = dbc.Container(
             [
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
-                        [dbc.Row([dbc.Col(html.H5('Number of Cases in'),md=6,width=4),
+                        [dbc.Row([dbc.Col(html.H5('Number of Cases in'),md=4,width=3),
                                   dbc.Col(dcc.Dropdown(
                     options=phu_dict_list,
                     value='ONTARIO',
                     clearable=False,
-                id="phu_dropdown"),md=6,width=8, align = "start")], align="start"),
+                id="phu_dropdown"),md=8,width=9, align = "start")], align="start", form=True),
                          dbc.Row([dbc.Col(dcc.Graph(id='phu-bar',figure=phu_bar),id="phu-zone")])
                          ]
                     ),
                     style={'text-align': 'start',
-                           'margin-top': '10px',
+                           'margin-top': '20px',
                            'margin-bottom': '5px',
                            'margin-left': '15px'}, outline=True), md=6, width=6),
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
-                        [dbc.Row([dbc.Col(html.H5('Ontario COVID-19 ICU Cases'),md=6,width=4),
-                                  dbc.Col(dcc.Dropdown(
+                        [dbc.Row([dbc.Col(dcc.Dropdown(
                     options=icu_dict_list,
                     value='ONTARIO',
                     clearable=False,
-                id="icu_dropdown"),md=6,width=8, align = "start")], align="start"),
+                id="icu_dropdown"),md=4,width=4, align = "start"),
+                            dbc.Col(html.H5('COVID-19 ICU Cases'),md=6,width=8)], align="start", form=True),
                          dbc.Row([dbc.Col(dcc.Graph(id='covid19-icu',figure=fig_ICU),id="line-box")])
                          ]
                     ),
                     style={'text-align': 'start',
-                           'margin-top': '10px',
+                           'margin-top': '20px',
+                           'margin-bottom': '5px',
+                           'margin-right': '15px'}, outline=True), md=6, width=6),
+            ]),
+
+        # Age and Gender plots
+        dbc.Row(
+            [
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col(html.H5('COVID-19 Cases in Ontario by Reporting Date'))], align="start"),
+                         dbc.Row([dbc.Col(dcc.Dropdown(
+                                      options=[
+                                          {'label': 'Total Cases', 'value': 'all'},
+                                          {'label': 'by Age Group', 'value': 'age'},
+                                          {'label': 'by Gender', 'value': 'gender'}
+                                      ],
+                                      value='all',
+                                      clearable=False,
+                                      id="dropdown"), md=4, width=4, align = "start")
+
+                         ], align="start"),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-casebar',figure=fig_bar1),id="ovid19-casebar")])
+                         ]
+                    ),
+                    style={'text-align': 'start',
+                           'margin-top': '20px',
+                           'margin-bottom': '5px',
+                           'margin-left': '15px'}, outline=True), md=6, width=6),
+                dbc.Col(dbc.Card(
+                    dbc.CardBody(
+                        [dbc.Row([dbc.Col(html.H5('Age and Gender Distribution of COVID-19 Cases in Ontario'))]),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-ageGender',figure=fig_age_gender),id="ageGender-box")])
+                         ]
+                    ),
+                    style={'text-align': 'start',
+                           'margin-top': '20px',
                            'margin-bottom': '5px',
                            'margin-right': '15px'}, outline=True), md=6, width=6),
             ]),
@@ -410,40 +447,39 @@ app.layout = dbc.Container(
         
         # Ontario ICU and Positive Rate
         dbc.Row(
-            [   
-                # COVID-19 ICU Cases by 5 Regions
-                #dbc.Col(dcc.Graph(id='covid19-icu',figure=fig_ICU),id="line-box",md=0,width=0),
+            [   # Vaccine
+                dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=5,width=6),
                 # COVID-19 Positive Rate by Public Health Unit
                 dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box",md=7,width=6),
             ],
-            align="center",
-        className="h-85"),
+            align="start", form=True,
+        className="h-95"),
         
         # Ontario Vaccine Administration and age and gender distribution
-        dbc.Row(
-            [   # Vaccine
-                dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=0,width=0),
-                # age and gender distribution
-                dbc.Col(dcc.Graph(id='covid19-ageGender',figure=fig_age_gender),id="ageGender-box",md=6,width=6),
-            ],
-            align="center",
-        className="h-95"),
+        # dbc.Row(
+        #     [   # Vaccine
+        #         # dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=0,width=0),
+        #         # age and gender distribution
+        #         #dbc.Col(dcc.Graph(id='covid19-ageGender',figure=fig_age_gender),id="ageGender-box",md=6,width=6),
+        #     ],
+        #     align="center",
+        # className="h-95"),
 
-        dbc.Row(
-            [
-                dbc.Col([html.H6("Filter"),dcc.Dropdown(
-                    options=[
-                        {'label': 'None', 'value': 'all'},
-                        {'label': 'Age', 'value': 'age'},
-                        {'label': 'Gender', 'value': 'gender'}
-                    ],
-                    value='all',
-                    clearable=False,
-                id="dropdown")],md=1,width=1),
-                dbc.Col(dcc.Graph(id='covid19-casebar',figure=fig_bar1),id="ovid19-casebar",md=6,width=6),
-            ],
-            align="center",
-        className="h-95"),
+        # dbc.Row(
+        #     [
+        #         dbc.Col([html.H6("Filter"),dcc.Dropdown(
+        #             options=[
+        #                 {'label': 'None', 'value': 'all'},
+        #                 {'label': 'Age', 'value': 'age'},
+        #                 {'label': 'Gender', 'value': 'gender'}
+        #             ],
+        #             value='all',
+        #             clearable=False,
+        #         id="dropdown")],md=1,width=1),
+        #         dbc.Col(dcc.Graph(id='covid19-casebar',figure=fig_bar1),id="covid19-casebar",md=6,width=6),
+        #     ],
+        #     align="center",
+        # className="h-95"),
 
     ],
     fluid=True,
@@ -458,7 +494,7 @@ def update_phu_bar(value):
     if value is not None:            
         if value=='ONTARIO':
             phu_bar.update_layout(
-                margin=dict(l=25, r=25, t=30, b=25))
+                margin=dict(t=50))
             return phu_bar
         else:
             #compute new plot
@@ -470,7 +506,7 @@ def update_phu_bar(value):
                 marker_color=colors
             )])
             phu_bar2.update_layout(
-                margin=dict(l=25, r=25, t=30, b=25), yaxis_range=[0,100000])
+                margin=dict(t=50), yaxis_range=[0,100000])
             return phu_bar2
     return phu_bar
 
@@ -486,7 +522,7 @@ def update_icu_scatter(value):
     if value is not None:            
         if value=='ONTARIO':
             fig_ICU.update_layout(
-                margin=dict(l=25, r=25, t=30, b=25))
+                margin=dict(t=50))
             return fig_ICU
         else:
             #compute new plot
@@ -498,7 +534,7 @@ def update_icu_scatter(value):
                 line=dict(color=color_dict[value]))])
             
             icu_temp.update_layout(
-                margin=dict(l=25, r=25, t=30, b=25), yaxis_range=[0,450])
+                margin=dict(t=50), yaxis_range=[0,450])
             return icu_temp
     return icu_temp
 
@@ -510,10 +546,16 @@ def update_icu_scatter(value):
 def update_figure(value):    
     if value is not None:            
         if value=='all':
+            fig_bar1.update_layout(
+                margin=dict(t=20))
             return fig_bar1
         elif value=='age':
+            fig_bar2.update_layout(
+                margin=dict(t=20))
             return fig_bar2
         else:
+            fig_bar3.update_layout(
+                margin=dict(t=20))
             return fig_bar3
     return fig_bar1
 

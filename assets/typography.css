@@ -28,5 +28,13 @@ h4, h6 {
 h5 {
     font-family: "Helvetica";
     color: #353839;
-    font-size: 25px;
+    font-size: 20px;
+    font-weight: 500;
+    margin: 5px 0px 0px 0px;
+}
+
+.Select-menu-outer {
+    font-family: "Helvetica";
+    font-size: 15px;
+    font-weight: 500;
 }
