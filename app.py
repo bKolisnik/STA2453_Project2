@@ -42,7 +42,7 @@ df_testing_centre = df_testing_centre.loc[df_testing_centre['active']=='Yes']
 df_testing_centre = df_testing_centre.loc[(df_testing_centre['latitude'].isna()==False)&(df_testing_centre['longitude'].isna()==False)]
 df_testing_centre['longitude'] = pd.to_numeric(df_testing_centre['longitude'].str.strip())
 df_testing_centre.loc[df_testing_centre['phone'].isna(),'phone'] = 'N/A'
-
+df_testing_centre = df_testing_centre.loc[df_testing_centre['longitude'] != 0]
 
 # modify gender feature to only contain female, male and other
 df_age_gender.Client_Gender = df_age_gender.Client_Gender.replace(
@@ -67,10 +67,7 @@ df_age_only = df_age_gender[['Case_Reported_Date', 'Age_Group']]
 df_age_gender_date = df_age_gender[['Case_Reported_Date', 'Age_Group', 'Client_Gender']]
 bar_df = df_age_gender_date.groupby('Case_Reported_Date')['Client_Gender'].agg(['count'])
 bar_df.reset_index(inplace = True)
-# ax = plt.subplot(111)
-# ax.bar(pd.to_datetime(bar_df.iloc[:, 0]), bar_df.iloc[:, 1], width=10)
-# ax.xaxis_date()
-# plt.show()
+
 
 fig_bar1 = px.bar(x= pd.to_datetime(bar_df.iloc[:, 0]), y= bar_df.iloc[:, 1])
 fig_bar1.update_layout(
