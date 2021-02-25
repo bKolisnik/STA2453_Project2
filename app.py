@@ -154,7 +154,7 @@ df_ICU_ONTARIO = df_ICU.groupby('date')['date', 'ICU'].agg('sum')
 df_ICU_ONTARIO.reset_index(inplace = True)
 
 # get icu dropdown list
-icu_dict_list = [{'label':name, 'value':name} for name in df_ICU['oh_region'].unique()]
+icu_dict_list = [{'label':name + ' ONTARIO', 'value':name + ' ONTARIO'} for name in df_ICU['oh_region'].unique()]
 icu_dict_list.append({'label':'ONTARIO','value':'ONTARIO'})
 
 
@@ -448,9 +448,9 @@ app.layout = dbc.Container(
             [
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
-                        [dbc.Row([dbc.Col(html.H5('PHU Ranked by COVID-19 Positive Rate'))]),
-                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box")])
-                         ]
+                        [dbc.Row([dbc.Col(html.H5('Ontario Daily Vaccine Administration'))], align="start"),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box")])
+                        ]
                     ),
                     style={'text-align': 'start',
                            'margin-top': '20px',
@@ -458,8 +458,8 @@ app.layout = dbc.Container(
                            'margin-left': '15px'}, outline=True), md=7, width=8),
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
-                        [dbc.Row([dbc.Col(html.H5('Ontario Daily Vaccine Administration'))], align="start"),
-                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box")])
+                        [dbc.Row([dbc.Col(html.H5('PHU Ranked by COVID-19 Positive Rate'))]),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box")])
                          ]
                     ),
                     style={'text-align': 'center',
@@ -467,6 +467,12 @@ app.layout = dbc.Container(
                            'margin-bottom': '5px',
                            'margin-right': '15px'}, outline=True), md=5, width=4),
             ]),
+#         dbc.Row(dbc.Button(
+#             "External Link",
+#             id="link-centered", 
+#             className="ml-auto",
+#             href='https://en.wikipedia.org/wiki/Main_Page'
+#         ))
 #         dbc.Row(
 #             [   # Vaccine
 #                 dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=5,width=6),
@@ -536,8 +542,8 @@ def update_phu_bar(value):
     Output('covid19-icu', 'figure'),
     [Input('icu_dropdown', 'value')])
 def update_icu_scatter(value):
-    color_dict = {'CENTRAL': "#7f8bf5", 'TORONTO': "#445bab",
-                 'WEST': "#0fba7c", 'EAST': "#4b9cfc", 'NORTH': "#d461f2"}
+    color_dict = {'CENTRAL ONTARIO': "#7f8bf5", 'TORONTO ONTARIO': "#445bab",
+                 'WEST ONTARIO': "#0fba7c", 'EAST ONTARIO': "#4b9cfc", 'NORTH ONTARIO': "#d461f2"}
 
     #too many plots to precompute. Compute plot dynamically  
     if value is not None:            
@@ -547,7 +553,7 @@ def update_icu_scatter(value):
             return fig_ICU
         else:
             #compute new plot
-            df_ICU_temp= df_ICU.loc[df_ICU.oh_region == value]
+            df_ICU_temp= df_ICU.loc[df_ICU.oh_region == value.split()[0]]
             icu_temp = go.Figure(data=[go.Scatter(
                 x=df_ICU_temp.date,
                 y=df_ICU_temp.ICU,
@@ -600,4 +606,4 @@ def update_figure(clickData):
 if __name__ == '__main__':
     # port=8000, host='127.0.0.1'
     # debug=True
-    app.run_server(debug=True)
+    app.run_server(port=8000, host='127.0.0.1')
