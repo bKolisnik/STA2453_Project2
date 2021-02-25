@@ -6,24 +6,25 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
-
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
-
 import json
 import numpy as np
 import pandas as pd
 import io
 import requests
 
-#the daily case changes by phu csv total column is the the number of new cases since yesterday it is new positive cases + new resolved cases + new deaths
 
 
+########################################################################################
+## Download the data
+########################################################################################
 def get_data_from_url(url):
     content = requests.get(url).content
     return pd.read_csv(io.StringIO(content.decode('utf-8')))
 
+# COVID-19 Cases Data
 phu_data_rolling = get_data_from_url('https://data.ontario.ca/dataset/1115d5fe-dd84-4c69-b5ed-05bf0c0a0ff9/resource/d1bfe1ad-6575-4352-8302-09ca81f7ddfc/download/cases_by_status_and_phu.csv')
 ontario_daily = get_data_from_url('https://data.ontario.ca/dataset/f4f86e54-872d-43f8-8a86-3892fd3cb5e6/resource/ed270bb8-340b-41f9-a7c6-e8ef587e6d11/download/covidtesting.csv')
 # COVID-19 Testing Data
@@ -34,8 +35,18 @@ df_ICU = get_data_from_url('https://data.ontario.ca/dataset/8f3a449b-bde5-4631-a
 df_Vaccine = get_data_from_url('https://raw.githubusercontent.com/ccodwg/Covid19Canada/master/timeseries_prov/vaccine_administration_timeseries_prov.csv')
 # COVID-19 Ontario Age and Gender Data
 df_age_gender = get_data_from_url('https://data.ontario.ca/dataset/f4112442-bdc8-45d2-be3c-12efae72fb27/resource/455fd63b-603d-4608-8216-7d8647f43350/download/conposcovidloc.csv')
-#COVID-19 Testing Centers
+# COVID-19 Testing Centers
 df_testing_centre = get_data_from_url('https://data.ontario.ca/dataset/covid-19-assessment-centre-locations/resource/c60993bb-3988-4648-9be9-398dee480514/download/assessment_centre_locations.csv')
+
+
+
+########################################################################################
+## Download the data
+########################################################################################
+
+
+
+
 
 #modify testing centres to only contain currently active testing centres
 df_testing_centre = df_testing_centre.loc[df_testing_centre['active']=='Yes']
@@ -458,7 +469,7 @@ app.layout = dbc.Container(
                             "Reference Data",
                             id="link-centered", 
                             className="ml-auto",
-                            href='https://en.wikipedia.org/wiki/Main_Page'
+                            href='https://data.ontario.ca/dataset/'
                             ))
                         ]
                     ),
