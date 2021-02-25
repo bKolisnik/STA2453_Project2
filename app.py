@@ -449,7 +449,13 @@ app.layout = dbc.Container(
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
                         [dbc.Row([dbc.Col(html.H5('Ontario Daily Vaccine Administration'))], align="start"),
-                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box")])
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box")]),
+                         dbc.Row(dbc.Button(
+                            "Reference Data",
+                            id="link-centered", 
+                            className="ml-auto",
+                            href='https://en.wikipedia.org/wiki/Main_Page'
+                            ))
                         ]
                     ),
                     style={'text-align': 'start',
