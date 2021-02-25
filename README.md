@@ -8,4 +8,16 @@ Auxillary Datasets: https://geohub.lio.gov.on.ca/datasets/ministry-of-health-pub
 
 Audience: General Ontario Population
 
+After pulling the repo to run the dashboard please complete the following steps.
 
+1. Install the required packages using 
+
+```
+pip install -r requirements.txt
+```
+
+2. Run the dashboard. All relevant files will be downloaded.
+```
+python app.py
+```
+3. Go to http://127.0.0.1:8050/
