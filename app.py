@@ -452,8 +452,8 @@ app.layout = dbc.Container(
             [
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
-                        [dbc.Row([dbc.Col(html.H5('Ontario Daily Vaccine Administration'))], align="start"),
-                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box")]),
+                        [dbc.Row([dbc.Col(html.H5('PHU Ranked by COVID-19 Positive Rate'))]),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box")]),
                          dbc.Row(dbc.Button(
                             "Reference Data",
                             id="link-centered", 
