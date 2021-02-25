@@ -165,7 +165,7 @@ fig_ICU = go.Figure(data=[go.Scatter(
     line=dict(color="#7289da"))])
 fig_ICU.update_layout(
     xaxis_title="Date",
-    yaxis_title="ICU")
+    yaxis_title="Number of ICU Cases")
 
 
 
@@ -455,17 +455,17 @@ app.layout = dbc.Container(
                     style={'text-align': 'start',
                            'margin-top': '20px',
                            'margin-bottom': '5px',
-                           'margin-left': '15px'}, outline=True), md=6, width=6),
+                           'margin-left': '15px'}, outline=True), md=7, width=8),
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
                         [dbc.Row([dbc.Col(html.H5('Ontario Daily Vaccine Administration'))], align="start"),
                          dbc.Row([dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box")])
                          ]
                     ),
-                    style={'text-align': 'start',
+                    style={'text-align': 'center',
                            'margin-top': '20px',
                            'margin-bottom': '5px',
-                           'margin-right': '15px'}, outline=True), md=6, width=6),
+                           'margin-right': '15px'}, outline=True), md=5, width=4),
             ]),
 #         dbc.Row(
 #             [   # Vaccine
