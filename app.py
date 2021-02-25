@@ -211,6 +211,10 @@ phu_bar = go.Figure(data=[go.Bar(
     y=[active_cases, total_recoveries, total_deaths],
     marker_color=colors # marker color can be a single color value or an iterable
 )])
+phu_bar.update_layout(
+    yaxis_title="Number of Cases")
+
+
 #phu_bar.update_layout(title_text='Number of cases in Ontario')
 
 
@@ -448,9 +452,9 @@ app.layout = dbc.Container(
             [
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
-                        [dbc.Row([dbc.Col(html.H5('Ontario Daily Vaccine Administration'))], align="start"),
-                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box")])
-                        ]
+                        [dbc.Row([dbc.Col(html.H5('PHU Ranked by COVID-19 Positive Rate'))]),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box")])
+                         ]
                     ),
                     style={'text-align': 'start',
                            'margin-top': '20px',
@@ -458,9 +462,9 @@ app.layout = dbc.Container(
                            'margin-left': '15px'}, outline=True), md=7, width=8),
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
-                        [dbc.Row([dbc.Col(html.H5('PHU Ranked by COVID-19 Positive Rate'))]),
-                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box")])
-                         ]
+                        [dbc.Row([dbc.Col(html.H5('Ontario Daily Vaccine Administration'))], align="start"),
+                         dbc.Row([dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box")])
+                        ]
                     ),
                     style={'text-align': 'center',
                            'margin-top': '20px',
@@ -534,6 +538,8 @@ def update_phu_bar(value):
             )])
             phu_bar2.update_layout(
                 margin=dict(t=50), yaxis_range=[0,100000])
+            phu_bar.update_layout(
+                yaxis_title="Number of Cases")
             return phu_bar2
     return phu_bar
 
@@ -564,7 +570,7 @@ def update_icu_scatter(value):
                 margin=dict(t=50), yaxis_range=[0,450])
             icu_temp.update_layout(
                 xaxis_title="Date",
-                yaxis_title="ICU")
+                yaxis_title="Number of ICU Cases")
             return icu_temp
     return icu_temp
 
@@ -606,4 +612,4 @@ def update_figure(clickData):
 if __name__ == '__main__':
     # port=8000, host='127.0.0.1'
     # debug=True
-    app.run_server(port=8000, host='127.0.0.1')
+    app.run_server(debug=True)
