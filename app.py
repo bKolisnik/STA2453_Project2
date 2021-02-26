@@ -41,19 +41,121 @@ df_testing_centre = get_data_from_url('https://data.ontario.ca/dataset/covid-19-
 
 
 ########################################################################################
-## Download the data
+## Modify the Data and Make Plot
 ########################################################################################
 
 
+########################################################################################
+# COVID-19 Statistics
+
+# necessary global variables
+ontario_daily.loc[:,'new_positive'] = ontario_daily['Confirmed Positive'].diff()
+ontario_daily.loc[:,'new_cases']= ontario_daily['Total Cases'].diff()
+ontario_daily.loc[:,'new_resolved']= ontario_daily['Resolved'].diff()
+ontario_daily.loc[:,'new_death']= ontario_daily['Deaths'].diff()
+
+today = ontario_daily.loc[ontario_daily['Reported Date']==ontario_daily['Reported Date'].max(),:]
+active_cases = int(today['Confirmed Positive'])
+total_cases = int(today['Total Cases'])
+total_deaths = int(today['Deaths'])
+total_recoveries = int(today['Resolved'])
+total_tests = int(ontario_daily['Total tests completed in the last day'].sum())
+
+new_positive_today = int(today['new_cases'])
+new_recovered_today = int(today['new_resolved'])
+new_deaths_today = int(today['new_death'])
+tests_today = int(today['Total tests completed in the last day'])
+
+if(new_positive_today < 0):
+    new_positive_today = 0
 
 
 
-#modify testing centres to only contain currently active testing centres
+########################################################################################
+# Map Plot
+
+# COVID-19 Cases Data for map plot
+df = phu_data_rolling.groupby('PHU_NAME')['FILE_DATE'].max().reset_index()
+df = df.merge(phu_data_rolling, on = ['PHU_NAME', 'FILE_DATE'])
+df.reset_index(inplace=True, drop=True)
+
+
+
+# modify testing centres to only contain currently active testing centres
 df_testing_centre = df_testing_centre.loc[df_testing_centre['active']=='Yes']
 df_testing_centre = df_testing_centre.loc[(df_testing_centre['latitude'].isna()==False)&(df_testing_centre['longitude'].isna()==False)]
 df_testing_centre['longitude'] = pd.to_numeric(df_testing_centre['longitude'].str.strip())
 df_testing_centre.loc[df_testing_centre['phone'].isna(),'phone'] = 'N/A'
 df_testing_centre = df_testing_centre.loc[df_testing_centre['longitude'] != 0]
+
+
+with open("Ministry_of_Health_Public_Health_Unit_Boundary Simplified.json") as f:
+    boundary_data = json.load(f)
+
+fig = px.choropleth_mapbox(df, geojson=boundary_data, featureidkey='properties.PHU_ID', 
+                           locations='PHU_NUM', color='ACTIVE_CASES',
+                           color_continuous_scale="purpor",
+                           #color_continuous_scale="agsunset",
+                           range_color=(0, 4000),
+                           mapbox_style="carto-positron",
+                           zoom=4, center = {"lat": 48.31, "lon": -84.73},
+                           opacity=0.5,
+                           labels={'PHU_NUM': 'PHU Number'},
+                           hover_data = ['PHU_NAME']
+                          )
+
+fig2 = px.scatter_mapbox(df_testing_centre,lat='latitude',lon='longitude',
+                         hover_name='location_name',hover_data=['phone','website'],
+                         mapbox_style="carto-positron",zoom=4, center = {"lat": 48.31, "lon": -84.73})
+
+fig.add_trace(fig2.data[0])
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, dragmode=False)
+
+
+########################################################################################
+# PHU Bar Plot
+
+# Needed for plotting phu bars
+phu_dict_list = [{'label':name, 'value':name} for name in phu_data_rolling['PHU_NAME'].unique() if name is not np.nan]
+phu_dict_list.append({'label':'ONTARIO','value':'ONTARIO'})
+
+# Bar plot for phu data
+colors = ['#d9534f','#5cb85c','#7289da']
+
+phu_bar = go.Figure(data=[go.Bar(
+    x=['Active', 'Recovered', 'Deaths'],
+    y=[active_cases, total_recoveries, total_deaths],
+    marker_color=colors # marker color can be a single color value or an iterable
+)])
+phu_bar.update_layout(
+    yaxis_title="Number of Cases")
+
+
+########################################################################################
+# ICU Line Plot
+
+## compute the ICU cases by different region
+df_ICU_ONTARIO = df_ICU.groupby('date')['date', 'ICU'].agg('sum')
+df_ICU_ONTARIO.reset_index(inplace = True)
+
+# get icu dropdown list
+icu_dict_list = [{'label':name + ' ONTARIO', 'value':name + ' ONTARIO'} for name in df_ICU['oh_region'].unique()]
+icu_dict_list.append({'label':'ONTARIO','value':'ONTARIO'})
+
+
+fig_ICU = go.Figure(data=[go.Scatter(
+    x=df_ICU_ONTARIO.date,
+    y=df_ICU_ONTARIO.ICU,
+    name="ONTARIO",
+    line=dict(color="#7289da"))])
+fig_ICU.update_layout(
+    xaxis_title="Date",
+    yaxis_title="Number of ICU Cases")
+
+
+
+########################################################################################
+# Age and Gender Bar Plot
 
 # modify gender feature to only contain female, male and other
 df_age_gender.Client_Gender = df_age_gender.Client_Gender.replace(
@@ -74,11 +176,11 @@ df_age_gender.Age_Group = df_age_gender.Age_Group.replace(
 df_age_gender = df_age_gender[['Case_Reported_Date', 'Age_Group', 'Client_Gender']]
 df_age_only = df_age_gender[['Case_Reported_Date', 'Age_Group']]
 
+
 # create bar plots of total cases, cases by age groups, cases by exposure:
 df_age_gender_date = df_age_gender[['Case_Reported_Date', 'Age_Group', 'Client_Gender']]
 bar_df = df_age_gender_date.groupby('Case_Reported_Date')['Client_Gender'].agg(['count'])
 bar_df.reset_index(inplace = True)
-
 
 fig_bar1 = px.bar(x= pd.to_datetime(bar_df.iloc[:, 0]), y= bar_df.iloc[:, 1])
 fig_bar1.update_layout(
@@ -100,18 +202,21 @@ fig_bar2.update_traces(hovertemplate='Date: %{x} <br>Count: %{y}', selector=dict
 
 gender_bar_df = df_age_gender_date.groupby(['Case_Reported_Date', 'Client_Gender'])['Client_Gender'].agg(['count'])
 gender_bar_df.reset_index(inplace = True)
+
 fig_bar3 = px.bar(x= pd.to_datetime(gender_bar_df['Case_Reported_Date']), y= gender_bar_df['count'], color = gender_bar_df['Client_Gender'])
 fig_bar3.update_layout(
     title="",
     xaxis_title="Case Reported Date",
     yaxis_title="Number of reported cases",
     legend_title_text='Gender')
+
 fig_bar3.update_traces(hovertemplate='Date: %{x} <br>Count: %{y}', selector=dict(type='bar'))
 
 # compute total count groupby age and gender
 df_age_gender = df_age_gender.groupby(by=['Age_Group', 'Client_Gender']).count()
 df_age_gender = df_age_gender.groupby(level = 0).apply(lambda x: 100 * x / float(x.sum()))
 df_age_gender.reset_index(inplace = True)
+
 # compute total count groupby age
 df_age_only = df_age_only.groupby(by=['Age_Group']).count()
 df_age_only = df_age_only.apply(lambda x: 100 * x / float(x.sum()))
@@ -128,14 +233,8 @@ fig_age_gender = px.bar(df_age_gender, x="percent", y="Age_Group", color="Client
 
 
 
-#phu_data_rolling = pd.read_csv('Ontario_PHU.csv')
-#ontario_daily = pd.read_csv('Ontario_status.csv')
-df = phu_data_rolling.groupby('PHU_NAME')['FILE_DATE'].max().reset_index()
-df = df.merge(phu_data_rolling, on = ['PHU_NAME', 'FILE_DATE'])
-df.reset_index(inplace=True, drop=True)
-#Needed for plotting phu bars
-phu_dict_list = [{'label':name, 'value':name} for name in phu_data_rolling['PHU_NAME'].unique() if name is not np.nan]
-phu_dict_list.append({'label':'ONTARIO','value':'ONTARIO'})
+########################################################################################
+# COVID-19 Positive Rate Bar Plot
 
 ## compute the population in each Public Health Unit
 # convert string to integer
@@ -160,27 +259,13 @@ fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700,
                                    'PHU_NAME': 'Public Health Unit'})
 fig_positive_rate.update_layout(margin=dict(l=0))
 fig_positive_rate.update_traces(marker_color="#7289da")
-## compute the ICU cases by different region
-df_ICU_ONTARIO = df_ICU.groupby('date')['date', 'ICU'].agg('sum')
-df_ICU_ONTARIO.reset_index(inplace = True)
-
-# get icu dropdown list
-icu_dict_list = [{'label':name + ' ONTARIO', 'value':name + ' ONTARIO'} for name in df_ICU['oh_region'].unique()]
-icu_dict_list.append({'label':'ONTARIO','value':'ONTARIO'})
-
-
-fig_ICU = go.Figure(data=[go.Scatter(
-    x=df_ICU_ONTARIO.date,
-    y=df_ICU_ONTARIO.ICU,
-    name="ONTARIO",
-    line=dict(color="#7289da"))])
-fig_ICU.update_layout(
-    xaxis_title="Date",
-    yaxis_title="Number of ICU Cases")
 
 
 
-## compute Ontario Vaccine Administration
+########################################################################################
+# Vaccine Administration Line Plot
+
+# compute Ontario Vaccine Administration
 df_Vaccine = df_Vaccine.loc[df_Vaccine['province'] == 'Ontario']
 df_Vaccine['date_vaccine_administered']= pd.to_datetime(df_Vaccine['date_vaccine_administered'], dayfirst = True)
 df_Vaccine.reset_index(inplace = True, drop = True)
@@ -191,98 +276,31 @@ fig_Vaccine = px.line(df_Vaccine, x = 'date_vaccine_administered', y = 'avaccine
               })
 fig_positive_rate.update_layout(margin=dict(r=0))
 
-#functions to compute necessary values for dashboard
-### necessary global variables
-ontario_daily.loc[:,'new_positive'] = ontario_daily['Confirmed Positive'].diff()
-ontario_daily.loc[:,'new_cases']= ontario_daily['Total Cases'].diff()
-ontario_daily.loc[:,'new_resolved']= ontario_daily['Resolved'].diff()
-ontario_daily.loc[:,'new_death']= ontario_daily['Deaths'].diff()
-
-today = ontario_daily.loc[ontario_daily['Reported Date']==ontario_daily['Reported Date'].max(),:]
-active_cases = int(today['Confirmed Positive'])
-total_cases = int(today['Total Cases'])
-total_deaths = int(today['Deaths'])
-total_recoveries = int(today['Resolved'])
-total_tests = int(ontario_daily['Total tests completed in the last day'].sum())
-
-new_positive_today = int(today['new_cases'])
-new_recovered_today = int(today['new_resolved'])
-new_deaths_today = int(today['new_death'])
-tests_today = int(today['Total tests completed in the last day'])
-
-if(new_positive_today < 0):
-    new_positive_today = 0
-###
-
-###Bar plot for phu data
-colors = ['#d9534f','#5cb85c','#7289da']
-
-phu_bar = go.Figure(data=[go.Bar(
-    x=['Active', 'Recovered', 'Deaths'],
-    y=[active_cases, total_recoveries, total_deaths],
-    marker_color=colors # marker color can be a single color value or an iterable
-)])
-phu_bar.update_layout(
-    yaxis_title="Number of Cases")
 
 
-#phu_bar.update_layout(title_text='Number of cases in Ontario')
 
 
-with open("Ministry_of_Health_Public_Health_Unit_Boundary Simplified.json") as f:
-    boundary_data = json.load(f)
-
-
-fig = px.choropleth_mapbox(df, geojson=boundary_data, featureidkey='properties.PHU_ID', 
-                           locations='PHU_NUM', color='ACTIVE_CASES',
-                           color_continuous_scale="purpor",
-                           #color_continuous_scale="agsunset",
-                           range_color=(0, 4000),
-                           mapbox_style="carto-positron",
-                           zoom=4, center = {"lat": 48.31, "lon": -84.73},
-                           opacity=0.5,
-                           labels={'PHU_NUM': 'PHU Number'},
-                           hover_data = ['PHU_NAME']
-                          )
-
-#fig2 = px.scatter_geo(df_testing_centre, lat='latitude', lon='longitude', hover_name='location_name', hover_data=['PHU','phone','website'])
-#fig.add_scattergeo()
-fig2 = px.scatter_mapbox(df_testing_centre,lat='latitude',lon='longitude',
-                         hover_name='location_name',hover_data=['phone','website'],
-                         mapbox_style="carto-positron",zoom=4, center = {"lat": 48.31, "lon": -84.73})
-fig.add_trace(fig2.data[0])
-
-'''
-fig = px.choropleth(df, geojson=boundary_data, featureidkey='properties.PHU_ID', 
-                           locations='PHU_NUM', color='ACTIVE_CASES',
-                           color_continuous_scale="purpor",
-                           #color_continuous_scale="agsunset",
-                           range_color=(0, 4000),
-                           scope='north america', center = {"lat": 48.31, "lon": -84.73},
-                           labels={'PHU_NUM': 'PHU Number'},
-                           hover_data = ['PHU_NAME']
-)'''
-fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}, dragmode=False)
-
-'''
-fig2 = go.Figure(go.Choroplethmapbox(geojson=boundary_data, locations=df['PHU_NUM'], featureidkey='properties.PHU_ID',z=df['ACTIVE_CASES'],
-                                    colorscale="YlOrRd", zmin=0, zmax=4000,
-                                    marker_opacity=0.5, marker_line_width=1,
-                                    customdata=df[['PHU_NAME','DEATHS']],
-                                    hovertemplate='<b>PHU Name: %{customdata[0]}</b><br>PHU Num: %{locations}<br>ACTIVE CASES: %{z}<br>DEATHS: %{customdata[1]}',))
-fig2.update_layout(mapbox_style="carto-positron",
-                  mapbox_zoom=4, mapbox_center = {"lat": 48.31, "lon": -84.73})
-fig2.update_layout(margin={"r":0,"t":0,"l":0,"b":0})'''
-
+########################################################################################
+# HTML Components
+    
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-### HTML components go here, control the heights using h classes with percent of screen height ##########
+# HTML components go here, control the heights using h classes with percent of screen height ##########
 app.layout = dbc.Container(
     [
-        dbc.Row(dbc.Col(html.H1("Ontario COVID-19 Tracker"))),
+        #### Header
+        dbc.Row([dbc.Col(html.H1("Ontario COVID-19 Dashboard")),
+                dbc.Col(dbc.Button(
+                            "Reference Data",
+                            id="link-centered", 
+                            className="ml-auto",
+                            href='https://data.ontario.ca/dataset/'
+                            ), md=2, width=6)]),
         html.Hr(),
+        
+        #### COVID-19 Statistics
         dbc.Row(
             [
                 dbc.Col(dbc.Card(
@@ -355,7 +373,8 @@ app.layout = dbc.Container(
             ]),
 
         # main choropleth map
-        dbc.Row(html.H3("Ontario COVID-19 Active Cases and Test Locations")),
+        dbc.Row(html.H3("Ontario COVID-19 Active Cases and Test Locations"),
+               style={'margin-left': '15px'}),
         dbc.Row(
             dbc.Col(dcc.Graph(id='ontario-map',figure=fig),id="map-box"),
             style={'text-align':'center',
@@ -363,7 +382,8 @@ app.layout = dbc.Container(
                            'margin-bottom': '10px',
                            'margin-left': '20px',
                            'margin-right': '10px'}),
-        # Cases and ICU plots
+        
+        # COVID-19 Cases and ICU plots
         dbc.Row(
             [
                 dbc.Col(dbc.Card(
@@ -434,43 +454,14 @@ app.layout = dbc.Container(
                            'margin-right': '15px',
                            'height': '35rem'}, outline=True), md=6, width=6),
             ]),
-
-        # dbc.Row(
-        #     [
-        #         dbc.Col(dbc.Row([dbc.Col(html.H4('Number of Cases in '),md=6,width=6),dbc.Col(dcc.Dropdown(
-        #             options=phu_dict_list,
-        #             value='ONTARIO',
-        #             clearable=False,
-        #         id="phu_dropdown"),md=6,width=6)],align="center"),md=6, width=6),
-        #         dbc.Col(html.H4("Ontario COVID-19 Active Cases and Test Locations"),md=6,width=6),
-        #     ],
-        #     align="center"),
-        # dbc.Row(
-        #     [
-        #         dbc.Col(dcc.Graph(id='phu-bar',figure=phu_bar),id="phu-zone",md=6, width=6),
-        #         dbc.Col(dcc.Graph(id='ontario-map',figure=fig),id="map-box",md=6,width=6),
-        #     ],
-        #     align="center",
-        # className="h-75"),
-#         dbc.Row(
-#             [
-#             ],
-#             align="center",
-#         className="h-25"),
         
-        # Ontario ICU and Positive Rate
+        # COVID-19 Positive Rate and Vaccine plots
         dbc.Row(
             [
                 dbc.Col(dbc.Card(
                     dbc.CardBody(
                         [dbc.Row([dbc.Col(html.H5('PHU Ranked by COVID-19 Positive Rate'))]),
                          dbc.Row([dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box")]),
-                         dbc.Row(dbc.Button(
-                            "Reference Data",
-                            id="link-centered", 
-                            className="ml-auto",
-                            href='https://data.ontario.ca/dataset/'
-                            ))
                         ]
                     ),
                     style={'text-align': 'start',
@@ -488,47 +479,6 @@ app.layout = dbc.Container(
                            'margin-bottom': '5px',
                            'margin-right': '15px'}, outline=True), md=5, width=4),
             ]),
-#         dbc.Row(dbc.Button(
-#             "External Link",
-#             id="link-centered", 
-#             className="ml-auto",
-#             href='https://en.wikipedia.org/wiki/Main_Page'
-#         ))
-#         dbc.Row(
-#             [   # Vaccine
-#                 dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=5,width=6),
-#                 # COVID-19 Positive Rate by Public Health Unit
-#                 dbc.Col(dcc.Graph(id='covid19-positive',figure=fig_positive_rate),id="bar-box",md=7,width=6),
-#             ],
-#             align="start", form=True,
-#         className="h-95"),
-        
-        # Ontario Vaccine Administration and age and gender distribution
-        # dbc.Row(
-        #     [   # Vaccine
-        #         # dbc.Col(dcc.Graph(id='covid19-vaccine',figure=fig_Vaccine),id="vaccine-box",md=0,width=0),
-        #         # age and gender distribution
-        #         #dbc.Col(dcc.Graph(id='covid19-ageGender',figure=fig_age_gender),id="ageGender-box",md=6,width=6),
-        #     ],
-        #     align="center",
-        # className="h-95"),
-
-        # dbc.Row(
-        #     [
-        #         dbc.Col([html.H6("Filter"),dcc.Dropdown(
-        #             options=[
-        #                 {'label': 'None', 'value': 'all'},
-        #                 {'label': 'Age', 'value': 'age'},
-        #                 {'label': 'Gender', 'value': 'gender'}
-        #             ],
-        #             value='all',
-        #             clearable=False,
-        #         id="dropdown")],md=1,width=1),
-        #         dbc.Col(dcc.Graph(id='covid19-casebar',figure=fig_bar1),id="covid19-casebar",md=6,width=6),
-        #     ],
-        #     align="center",
-        # className="h-95"),
-
     ],
     fluid=True,
     style={"height":"100vh"}
@@ -612,19 +562,7 @@ def update_figure(value):
             return fig_bar3
     return fig_bar1
 
-'''
-@app.callback(
-    Output('ontario-map', 'figure'),
-    [Input('ontario-map', 'clickData')])
-def update_figure(clickData):    
-    if clickData is not None:            
-        location = clickData['points'][0]['location']
-        if location not in selections:
-            selections.add(location)
-        else:
-            selections.remove(location)
-        
-    return get_figure(selections)'''
+
 
 if __name__ == '__main__':
     # port=8000, host='127.0.0.1'
