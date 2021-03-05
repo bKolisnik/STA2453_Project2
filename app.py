@@ -255,7 +255,7 @@ df = df.sort_values(by = 'positive_rate')
 fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700,
                            # color='positive_rate',
                            #color_continuous_scale="purpor",
-                           labels={'positive_rate': 'COVID-19 Positive Rate %',
+                           labels={'positive_rate': 'COVID-19 Active Cases Rate %',
                                    'PHU_NAME': 'Public Health Unit'})
 fig_positive_rate.update_layout(margin=dict(l=4,r=4))
 fig_positive_rate.update_traces(marker_color="#7289da")
