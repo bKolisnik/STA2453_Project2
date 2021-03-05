@@ -186,7 +186,7 @@ fig_bar1 = px.bar(x= pd.to_datetime(bar_df.iloc[:, 0]), y= bar_df.iloc[:, 1])
 fig_bar1.update_layout(
     title="",
     xaxis_title="Case Reported Date",
-    yaxis_title="Number of reported cases")
+    yaxis_title="Number of Reported Cases")
 fig_bar1.update_traces(hovertemplate='Date: %{x} <br>Count: %{y}', selector=dict(type='bar'))
 
 age_bar_df = df_age_gender_date.groupby(['Case_Reported_Date', 'Age_Group'])['Client_Gender'].agg(['count'])
@@ -196,7 +196,7 @@ fig_bar2 = px.bar(x= pd.to_datetime(age_bar_df['Case_Reported_Date']), y= age_ba
 fig_bar2.update_layout(
     title="",
     xaxis_title="Case Reported Date",
-    yaxis_title="Number of reported cases",
+    yaxis_title="Number of Reported Cases",
     legend_title_text='Age Group')
 fig_bar2.update_traces(hovertemplate='Date: %{x} <br>Count: %{y}', selector=dict(type='bar'))
 
@@ -207,7 +207,7 @@ fig_bar3 = px.bar(x= pd.to_datetime(gender_bar_df['Case_Reported_Date']), y= gen
 fig_bar3.update_layout(
     title="",
     xaxis_title="Case Reported Date",
-    yaxis_title="Number of reported cases",
+    yaxis_title="Number of Reported Cases",
     legend_title_text='Gender')
 
 fig_bar3.update_traces(hovertemplate='Date: %{x} <br>Count: %{y}', selector=dict(type='bar'))
@@ -227,7 +227,7 @@ df_age_gender = df_age_gender.merge(df_age_only, on = 'Age_Group')
 df_age_gender['percent'] = df_age_gender['Case_Reported_Date_x'] * df_age_gender['Case_Reported_Date_y']/100
 
 fig_age_gender = px.bar(df_age_gender, x="percent", y="Age_Group", color="Client_Gender", 
-             labels={'percent':'Proportion (%)', 'Age_Group': 'Age Group (years)',
+             labels={'percent':'Proportion (%)', 'Age_Group': 'Age Group (Years)',
                     'Client_Gender': 'Gender'})
 
 
@@ -257,7 +257,7 @@ fig_positive_rate = px.bar(df, x='positive_rate', y='PHU_NAME', height=700,
                            #color_continuous_scale="purpor",
                            labels={'positive_rate': 'COVID-19 Positive Rate %',
                                    'PHU_NAME': 'Public Health Unit'})
-fig_positive_rate.update_layout(margin=dict(l=0))
+fig_positive_rate.update_layout(margin=dict(l=4,r=4))
 fig_positive_rate.update_traces(marker_color="#7289da")
 
 
@@ -274,7 +274,7 @@ fig_Vaccine = px.line(df_Vaccine, x = 'date_vaccine_administered', y = 'avaccine
                   'date_vaccine_administered': 'Date',
                   'avaccine': 'Vaccine Administered'
               })
-fig_positive_rate.update_layout(margin=dict(r=0))
+fig_Vaccine.update_layout(margin=dict(r=8))
 
 
 
