@@ -1,4 +1,5 @@
-STA2453_Project2
+# Project #2 Data Visualization
+This repo contains our STA 2453 Project 2 dashboard code.
 
 Framework: Plotly Dash
 
@@ -8,6 +9,10 @@ Auxillary Datasets: https://geohub.lio.gov.on.ca/datasets/ministry-of-health-pub
 
 Audience: General Ontario Population
 
+## Analytical Pipeline: Data Access, Ingestion, and Presentation
+With the exception of one geojson file which has been inlcuded in the repo, the most recent versions of all required data sets are downloaded at server startup. The data sets are sourced from the provincial government of Ontario and the federal government of Canada respectively and downloaded as CSVs. Following the downloads, the data is cleaned and preprocessed. Much of the preprocessing includes filtering for relevant dates and joinging different data sets. Statistics and metrics are calulcated using the cleaned datasets. The data is stored in globally scoped Pandas dataframes which are accssible to the Dash application. The visualizations of the dashboard use these dataframes for their source data. 
+
+## Installation Instructions
 After pulling the repo to run the dashboard please complete the following steps.
 
 1. Install the required packages using 
